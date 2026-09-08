@@ -19,12 +19,19 @@ dist-ssr/
 frontend/dist/
 frontend/dist-ssr/
 
-# Environment variables
+# Environment variables & secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
+*.env.*
+!*.env.example
 backend/.env
-frontend/.env.local
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Logs
 logs/
