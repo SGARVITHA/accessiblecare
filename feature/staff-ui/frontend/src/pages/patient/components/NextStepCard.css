@@ -1,0 +1,62 @@
+.ac-next-step-card {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  margin-bottom: var(--space-6);
+  border: 1px solid rgba(169, 235, 244, 0.3);
+}
+
+.ac-next-step-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ac-next-step-card__eyebrow {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-secondary-container);
+}
+
+.ac-next-step-card__headline {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 700;
+  margin: 0 0 var(--space-2) 0;
+  color: #FFFFFF;
+}
+
+@media (max-width: 768px) {
+  .ac-next-step-card__headline {
+    font-size: 22px;
+    line-height: 30px;
+  }
+}
+
+.ac-next-step-card__context {
+  font-size: 16px;
+  line-height: 24px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 var(--space-6) 0;
+}
+
+.ac-next-step-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .ac-next-step-card__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

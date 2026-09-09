@@ -1,0 +1,227 @@
+/* Interpreter Status Page Styling */
+
+.interpreter-status-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.interpreter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 900px) {
+  .interpreter-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.interpreter-main-column,
+.interpreter-side-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.status-hero {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-bottom: var(--space-6);
+  border-bottom: 1px solid var(--color-surface-base);
+}
+
+.status-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-surface-low);
+  border-radius: var(--radius-lg);
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.status-hero-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-secondary);
+  letter-spacing: 0.5px;
+}
+
+.hero-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: var(--space-1) 0;
+}
+
+.hero-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.specialist-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background-color: var(--color-surface-low);
+  border: 1px solid var(--color-secondary-container);
+  border-radius: var(--radius-lg);
+  margin: var(--space-6) 0;
+}
+
+.specialist-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.specialist-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.specialist-role {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  letter-spacing: 0.5px;
+}
+
+.specialist-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 2px 0;
+}
+
+.specialist-level {
+  font-size: 13px;
+  color: var(--color-secondary);
+  font-weight: 500;
+}
+
+.mode-pill {
+  padding: var(--space-1) var(--space-3);
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.detail-table-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+.detail-cell {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-3);
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+}
+
+.cell-label {
+  font-size: 12px;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.cell-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.highlight-text {
+  color: var(--color-status-success);
+}
+
+.contingency-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: var(--space-2);
+  color: var(--color-on-surface);
+}
+
+.contingency-desc {
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  margin-top: 0;
+  margin-bottom: var(--space-4);
+
+  line-height: 1.5;
+}
+
+.contingency-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.feature-check {
+  color: var(--color-status-success);
+  font-weight: bold;
+}
+
+.side-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 0;
+  margin-bottom: var(--space-3);
+  color: var(--color-on-surface);
+}
+
+.next-steps-list {
+  margin: 0;
+  padding-left: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+}
+
+.side-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

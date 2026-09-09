@@ -1,0 +1,8 @@
+# AccessibleCare Backend Dependencies
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+pydantic>=2.6.0
+supabase>=2.3.0
+langgraph>=0.0.30
+google-generativeai>=0.4.0
+python-dotenv>=1.0.0

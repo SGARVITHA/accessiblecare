@@ -1,0 +1,93 @@
+.ac-care-flow {
+  margin-bottom: var(--space-6);
+}
+
+.ac-care-flow__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.ac-care-flow__title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.ac-care-flow__badge {
+  font-size: 13px;
+  font-weight: 600;
+  background-color: var(--color-secondary-container);
+  color: var(--color-primary);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+}
+
+.ac-care-flow__timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+}
+
+.ac-care-flow__step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-low);
+  border: 1px solid transparent;
+}
+
+.ac-care-flow__step--active {
+  background-color: #FFFFFF;
+  border-color: var(--color-secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.ac-care-flow__marker {
+  font-size: 20px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--color-surface-high);
+  flex-shrink: 0;
+}
+
+.ac-care-flow__step--active .ac-care-flow__marker {
+  background-color: var(--color-secondary-container);
+}
+
+.ac-care-flow__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ac-care-flow__step-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.ac-care-flow__current-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+}
+
+.ac-care-flow__step-desc {
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+}

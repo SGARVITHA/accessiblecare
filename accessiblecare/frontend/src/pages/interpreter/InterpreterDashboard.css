@@ -1,0 +1,296 @@
+.ac-int-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Duty Banner */
+.ac-int-duty-banner {
+  background: linear-gradient(135deg, #00353a 0%, #0b4d53 100%);
+  color: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(169, 235, 244, 0.2);
+}
+
+@media (max-width: 768px) {
+  .ac-int-duty-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+}
+
+.ac-int-duty-banner__left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.ac-int-duty-banner__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ac-int-duty-banner__meta {
+  font-size: 0.875rem;
+  color: #a9ebf4;
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ac-int-duty-banner__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Metrics Grid */
+.ac-int-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.ac-int-metric-card {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ac-int-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.ac-int-metric-card__header {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-on-surface-variant);
+}
+
+.ac-int-metric-card__value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.2;
+}
+
+.ac-int-metric-card__subtext {
+  font-size: 0.8125rem;
+  color: var(--color-outline);
+}
+
+/* Next Assignment Hero Card */
+.ac-int-hero-card {
+  background-color: #f0fdfa;
+  border: 1px solid #99f6e4;
+  border-left: 6px solid #0f766e;
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 860px) {
+  .ac-int-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.ac-int-hero-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ac-int-hero-card__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #0f766e;
+  background-color: #ccfbf1;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  width: fit-content;
+}
+
+.ac-int-hero-card__title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #115e59;
+  margin: 0;
+}
+
+.ac-int-hero-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+}
+
+.ac-int-hero-card__details span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ac-int-hero-card__actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Two Column Layout */
+.ac-int-grid-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+@media (max-width: 960px) {
+  .ac-int-grid-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Section Containers */
+.ac-int-panel {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
+}
+
+.ac-int-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-surface-high);
+  padding-bottom: var(--space-3);
+}
+
+.ac-int-panel__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.ac-int-notice-callout {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  font-size: 0.8125rem;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Request and Assignment List Items */
+.ac-int-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.ac-int-item-card {
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  background-color: #ffffff;
+  transition: border-color 0.15s ease;
+}
+
+.ac-int-item-card:hover {
+  border-color: var(--color-secondary);
+}
+
+.ac-int-item-card--urgent {
+  border-left: 4px solid var(--color-status-warning);
+}
+
+.ac-int-item-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.ac-int-item-card__title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+.ac-int-item-card__meta {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.ac-int-item-card__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-surface-high);
+  margin-top: var(--space-1);
+}
+
+.ac-int-pill-info {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background-color: var(--color-surface-base);
+  color: var(--color-on-surface-variant);
+}
+
+.ac-int-pill-info--remote {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.ac-int-empty-state {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-outline);
+  font-size: 0.875rem;
+}

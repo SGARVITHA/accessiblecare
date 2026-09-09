@@ -1,0 +1,100 @@
+/* Staff Escalations Center Styles */
+
+.ac-staff-escalations-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ac-staff-esc-summary-strip {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .ac-staff-esc-summary-strip {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.ac-staff-esc-card {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-surface-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  transition: box-shadow 0.15s ease;
+}
+
+.ac-staff-esc-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.ac-staff-esc-card--critical {
+  border-left: 4px solid var(--color-error);
+}
+
+.ac-staff-esc-card--high {
+  border-left: 4px solid var(--color-status-warning);
+}
+
+.ac-staff-esc-card--medium {
+  border-left: 4px solid var(--color-secondary);
+}
+
+.ac-staff-esc-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ac-staff-esc-card__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ac-staff-esc-priority-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ac-staff-esc-priority-badge--critical {
+  background-color: var(--color-error-container);
+  color: var(--color-error);
+}
+
+.ac-staff-esc-priority-badge--high {
+  background-color: var(--color-status-warning-bg);
+  color: var(--color-status-warning);
+}
+
+.ac-staff-esc-priority-badge--medium {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.ac-staff-esc-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ac-staff-esc-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-surface-base);
+  flex-wrap: wrap;
+}

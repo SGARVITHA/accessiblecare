@@ -1,0 +1,93 @@
+/* AccessibleCare Application Typography & Layout Helper Classes */
+
+/* Typography Scale */
+.display-large {
+  font-size: 40px;
+  line-height: 52px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+@media (max-width: 768px) {
+  .display-large {
+    font-size: 30px;
+    line-height: 38px;
+  }
+}
+
+.headline-large {
+  font-size: 32px;
+  line-height: 42px;
+  font-weight: 600;
+  letter-spacing: -0.25px;
+}
+
+.headline-medium {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
+.headline-small {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.title-large {
+  font-size: 18px;
+  line-height: 26px;
+  font-weight: 600;
+}
+
+.body-large {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.body-medium {
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
+}
+
+.body-small {
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.label-medium {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+/* Layout Utilities */
+.container-narrow {
+  width: 100%;
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container-wide {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

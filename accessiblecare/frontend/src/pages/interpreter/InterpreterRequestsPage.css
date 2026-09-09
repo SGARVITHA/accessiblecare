@@ -1,0 +1,172 @@
+.ac-int-requests-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.ac-int-filter-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.ac-int-filter-tabs {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.ac-int-filter-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-on-surface-variant);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ac-int-filter-btn:hover {
+  background-color: var(--color-surface-low);
+  color: var(--color-on-surface);
+}
+
+.ac-int-filter-btn--active {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+  font-weight: 600;
+  border-color: var(--color-primary);
+}
+
+.ac-int-filter-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.ac-int-select {
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  font-size: 0.875rem;
+  background-color: #ffffff;
+  color: var(--color-on-surface);
+  outline: none;
+}
+
+.ac-int-select:focus {
+  border-color: var(--color-secondary);
+}
+
+/* Request Cards Full View */
+.ac-int-requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ac-int-request-card {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.ac-int-request-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-secondary);
+}
+
+.ac-int-request-card--urgent {
+  border-left: 6px solid var(--color-status-warning);
+}
+
+.ac-int-request-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.ac-int-request-card__patient-name {
+  font-size: 1.1875rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.ac-int-request-card__badges {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.ac-int-request-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+  background-color: var(--color-surface-low);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+}
+
+.ac-int-field-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ac-int-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-outline);
+}
+
+.ac-int-field-val {
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.ac-int-request-card__notes {
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+  border-left: 3px solid var(--color-secondary-container);
+  padding-left: var(--space-3);
+  margin: 0;
+}
+
+.ac-int-request-card__actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-top: 1px solid var(--color-surface-high);
+  padding-top: var(--space-3);
+}
+
+.ac-int-timer-badge {
+  font-size: 0.8125rem;
+  color: var(--color-status-warning);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
