@@ -5,8 +5,10 @@
  * - Configurable base URL (VITE_API_BASE_URL)
  * - Automatic JSON parsing
  * - Consistent error handling
- * - Bearer token attachment for authenticated requests
+ * - Automatic Bearer token attachment from active Supabase session
  */
+
+import { supabase } from './supabase';
 
 export interface HealthResponse {
   status: string;
@@ -17,6 +19,10 @@ export interface AuthMeResponse {
   id: string;
   role: string;
   full_name?: string | null;
+}
+
+export interface AuthRoleResponse {
+  role: string;
 }
 
 export interface ApiErrorPayload {
@@ -58,17 +64,35 @@ export class ApiClient {
   }
 
   /**
-   * Set or clear the active Supabase access token for authenticated requests.
+   * Explicitly set or clear an override auth token.
    */
   public setAuthToken(token: string | null): void {
     this.authToken = token;
   }
 
   /**
-   * Get the current active auth token.
+   * Get the current override auth token if set.
    */
   public getAuthToken(): string | null {
     return this.authToken;
+  }
+
+  /**
+   * Resolve active authorization token from explicit override or active Supabase session.
+   */
+  private async resolveToken(explicitToken?: string | null): Promise<string | null> {
+    if (explicitToken !== undefined) {
+      return explicitToken;
+    }
+    if (this.authToken) {
+      return this.authToken;
+    }
+    try {
+      const { data } = await supabase.auth.getSession();
+      return data.session?.access_token || null;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -89,8 +113,8 @@ export class ApiClient {
       ...((options.headers as Record<string, string>) || {}),
     };
 
-    // Attach Bearer token if provided explicitly or configured globally
-    const token = options.token !== undefined ? options.token : this.authToken;
+    // Attach Bearer token from options override or Supabase session
+    const token = await this.resolveToken(options.token);
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
@@ -138,10 +162,17 @@ export class ApiClient {
   }
 
   /**
-   * GET /api/auth/me — Retrieve authenticated user profile
+   * GET /api/auth/me — Retrieve authenticated user profile from FastAPI backend
    */
   public async getAuthMe(token?: string | null): Promise<AuthMeResponse> {
     return this.request<AuthMeResponse>('/api/auth/me', { token });
+  }
+
+  /**
+   * GET /api/auth/me/role — Retrieve authoritative user role from FastAPI backend
+   */
+  public async getMyRole(token?: string | null): Promise<AuthRoleResponse> {
+    return this.request<AuthRoleResponse>('/api/auth/me/role', { token });
   }
 }
 

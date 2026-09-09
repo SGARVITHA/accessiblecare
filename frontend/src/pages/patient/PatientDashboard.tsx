@@ -1,104 +1,126 @@
-import { useState } from 'react'
-import heroImg from '../../assets/hero.png'
-import reactLogo from '../../assets/react.svg'
-import viteLogo from '../../assets/vite.svg'
-import '../../App.css'
+import { useEffect, useState } from 'react';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { StatusBadge } from '../../components/ui/StatusBadge';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import patientService from '../../services/patientService';
+import type { PatientDashboardSummary } from '../../types/patient';
+
+import NextStepCard from './components/NextStepCard';
+import UpcomingAppointmentCard from './components/UpcomingAppointmentCard';
+import TodayCareFlow from './components/TodayCareFlow';
+import AccessibilitySummaryCard from './components/AccessibilitySummaryCard';
+import InterpreterSummaryCard from './components/InterpreterSummaryCard';
+import SupportWayfinding from './components/SupportWayfinding';
+import DashboardReminders from './components/DashboardReminders';
+
+import './PatientDashboard.css';
 
 export default function PatientDashboard() {
-  const [count, setCount] = useState(0)
+  const [summary, setSummary] = useState<PatientDashboardSummary | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = () => {
+    setIsLoading(true);
+    setError(null);
+    patientService
+      .getPatientDashboard()
+      .then((data) => {
+        setSummary(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setError('We couldn’t load your care dashboard details right now.');
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    let active = true;
+    patientService
+      .getPatientDashboard()
+      .then((data) => {
+        if (active) {
+          setSummary(data);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError('We couldn’t load your care dashboard details right now.');
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="ac-dashboard-loading" style={{ padding: 'var(--space-8) 0', textAlign: 'center' }}>
+        <p className="body-large" style={{ color: 'var(--color-on-surface-variant)' }}>
+          Loading your accessible care dashboard...
+        </p>
+      </div>
+    );
+  }
+
+  if (error || !summary) {
+    return (
+      <Card padding="large" style={{ marginTop: 'var(--space-6)', textAlign: 'center' }}>
+        <h2 className="headline-small" style={{ color: 'var(--color-error)', marginBottom: 'var(--space-2)' }}>
+          Unable to Load Dashboard
+        </h2>
+        <p className="body-medium" style={{ color: 'var(--color-on-surface-variant)', marginBottom: 'var(--space-4)' }}>
+          {error || 'An unexpected error occurred while retrieving your appointment information.'}
+        </p>
+        <Button variant="primary" onClick={loadData}>
+          Try Again
+        </Button>
+      </Card>
+    );
+  }
+
+  const patientName = summary.patient.full_name || 'Rohan';
+  const mrn = summary.patient.mrn || 'P1024';
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="ac-patient-dashboard">
+      {/* Patient Greeting & Header */}
+      <PageHeader
+        eyebrow={`PATIENT PORTAL • MRN ${mrn}`}
+        title={`Welcome back, ${patientName}`}
+        description="Your communication preferences and interpreter support are actively coordinated for today's visit."
+        action={
+          <StatusBadge status="confirmed" label="Visual Alerts Active" />
+        }
+      />
 
-      <div className="ticks"></div>
+      {/* Primary Focal Area: Your Next Step Banner */}
+      <NextStepCard appointment={summary.next_appointment} />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {/* Main Dashboard Responsive Grid */}
+      <div className="ac-patient-dashboard__grid">
+        {/* Main Left Column */}
+        <div className="ac-patient-dashboard__col-main">
+          <UpcomingAppointmentCard
+            appointment={summary.next_appointment}
+            interpreterStatus={summary.interpreter_status}
+          />
+          <TodayCareFlow />
+          <SupportWayfinding />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg className="button-icon" role="presentation" aria-hidden="true">
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* Secondary Right Column */}
+        <div className="ac-patient-dashboard__col-side">
+          <AccessibilitySummaryCard profile={summary.accessibility_profile} />
+          <InterpreterSummaryCard interpreterStatus={summary.interpreter_status} />
+          <DashboardReminders notifications={summary.notifications} />
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -1,0 +1,27 @@
+.ac-patient-dashboard {
+  width: 100%;
+}
+
+.ac-patient-dashboard__grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .ac-patient-dashboard__grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.ac-patient-dashboard__col-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.ac-patient-dashboard__col-side {
+  display: flex;
+  flex-direction: column;
+}
