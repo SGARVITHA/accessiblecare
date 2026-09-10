@@ -10,6 +10,7 @@ import StaffLayout from './layouts/StaffLayout';
 import InterpreterLayout from './layouts/InterpreterLayout';
 
 import PatientDashboard from './pages/patient/PatientDashboard';
+import AppointmentListPage from './pages/patient/AppointmentListPage';
 import AppointmentDetailsPage from './pages/patient/AppointmentDetailsPage';
 import AccessibilitySetupPage from './pages/patient/AccessibilitySetupPage';
 import InterpreterStatusPage from './pages/patient/InterpreterStatusPage';
@@ -70,7 +71,7 @@ function App() {
             }
           >
             <Route index element={<PatientDashboard />} />
-            <Route path="appointments" element={<AppointmentDetailsPage />} />
+            <Route path="appointments" element={<AppointmentListPage />} />
             <Route path="appointments/:id" element={<AppointmentDetailsPage />} />
             <Route path="accessibility" element={<AccessibilitySetupPage />} />
             <Route path="interpreter" element={<InterpreterStatusPage />} />
