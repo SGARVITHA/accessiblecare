@@ -9,10 +9,7 @@ export interface PatientHeaderProps {
   userRole?: string;
 }
 
-export const PatientHeader: React.FC<PatientHeaderProps> = ({
-  userFullName,
-  userRole,
-}) => {
+export const PatientHeader: React.FC<PatientHeaderProps> = ({ userFullName, userRole }) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -30,16 +27,14 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
         <div className="ac-patient-header__brand">
           <NavLink to="/patient" className="ac-patient-header__logo">
             <span className="ac-patient-header__title">AccessibleCare</span>
-            <span className="ac-patient-header__tagline">
-              Accessible communication, coordinated care
-            </span>
+            <span className="ac-patient-header__tagline">Accessible communication, coordinated care</span>
           </NavLink>
         </div>
 
         <div className="ac-patient-header__user-actions">
-          <div className="ac-patient-header__accessibility-badge" title="Visual Reception & Queue Alert System Active">
+          <div className="ac-patient-header__accessibility-badge" title="AccessibleCare patient portal">
             <span className="ac-patient-header__status-dot" aria-hidden="true" />
-            <span className="ac-patient-header__status-text">Visual Alerts Active</span>
+            <span className="ac-patient-header__status-text">Accessibility Portal</span>
           </div>
 
           <div className="ac-patient-header__user-info">
@@ -47,65 +42,17 @@ export const PatientHeader: React.FC<PatientHeaderProps> = ({
             <span className="ac-patient-header__user-role">{displayRole}</span>
           </div>
 
-          <Button variant="secondary" size="medium" onClick={handleSignOut}>
-            Sign Out
-          </Button>
+          <Button variant="secondary" size="medium" onClick={handleSignOut}>Sign Out</Button>
         </div>
       </div>
 
       <nav className="ac-patient-header__nav-bar container-wide" aria-label="Patient Portal Navigation">
         <ul className="ac-patient-header__nav-list">
-          <li>
-            <NavLink
-              to="/patient"
-              end
-              className={({ isActive }) =>
-                `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`
-              }
-            >
-              Home
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/patient/appointments"
-              className={({ isActive }) =>
-                `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`
-              }
-            >
-              Appointments
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/patient/accessibility"
-              className={({ isActive }) =>
-                `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`
-              }
-            >
-              Accessibility
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/patient/interpreter"
-              className={({ isActive }) =>
-                `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`
-              }
-            >
-              Interpreter Status
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/patient/communication"
-              className={({ isActive }) =>
-                `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`
-              }
-            >
-              Quick Communication
-            </NavLink>
-          </li>
+          <li><NavLink to="/patient" end className={({ isActive }) => `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`}>Home</NavLink></li>
+          <li><NavLink to="/patient/appointments" className={({ isActive }) => `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`}>Appointments</NavLink></li>
+          <li><NavLink to="/patient/accessibility" className={({ isActive }) => `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`}>Accessibility</NavLink></li>
+          <li><NavLink to="/patient/interpreter" className={({ isActive }) => `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`}>Interpreter Status</NavLink></li>
+          <li><NavLink to="/patient/communication" className={({ isActive }) => `ac-patient-header__nav-link ${isActive ? 'ac-patient-header__nav-link--active' : ''}`}>Quick Communication</NavLink></li>
         </ul>
       </nav>
     </header>
