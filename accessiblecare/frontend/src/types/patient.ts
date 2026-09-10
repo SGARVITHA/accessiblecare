@@ -13,6 +13,19 @@ export type AppointmentStatus =
   | 'COMPLETED'
   | 'CANCELLED';
 
+export type AccessibilityVisitStatus =
+  | 'NOT_CONFIGURED'
+  | 'CREATED'
+  | 'PREFERENCES_CONFIRMED'
+  | 'COORDINATING'
+  | 'INTERPRETER_CONFIRMED'
+  | 'CHECKED_IN'
+  | 'IN_SERVICE'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'ESCALATED'
+  | 'RESOLVED';
+
 export type InterpreterConfirmationStatus =
   | 'CONFIRMED'
   | 'ASSIGNING'
@@ -32,13 +45,16 @@ export interface Patient {
 export interface Appointment {
   id: string;
   patient_id: string;
-  doctor_name: string;
-  department: string;
-  location: string;
+  external_id?: string;
+  doctor_name?: string;
+  department?: string;
+  hospital?: string;
+  location?: string;
   appointment_time: string;
-  status: AppointmentStatus;
-  accessibility_confirmed: boolean;
-  interpreter_required: boolean;
+  status: AppointmentStatus | string;
+  source?: string;
+  accessibility_confirmed?: boolean;
+  interpreter_required?: boolean;
   notes?: string;
 }
 
@@ -50,10 +66,31 @@ export interface AccessibilityProfile {
   interpreter_mode: InterpreterMode;
   allow_remote_fallback: boolean;
   companion_present: boolean;
-  visual_reception_alert: boolean;
-  visual_queue_alert: boolean;
-  escort_assistance: boolean;
+  companion_preference?: string;
+  visual_reception_alert?: boolean;
+  visual_queue_alert?: boolean;
+  escort_assistance?: boolean;
   special_instructions?: string;
+}
+
+export interface AccessibilityVisit {
+  id: string;
+  appointment_id: string;
+  patient_id: string;
+  communication_preference: CommunicationPreference;
+  interpreter_required: boolean;
+  preferred_mode?: InterpreterMode;
+  remote_accepted: boolean;
+  companion_present: boolean;
+  status: AccessibilityVisitStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AccessibilityStatus {
+  configured: boolean;
+  status: AccessibilityVisitStatus;
+  visit: AccessibilityVisit | null;
 }
 
 export interface InterpreterStatus {
