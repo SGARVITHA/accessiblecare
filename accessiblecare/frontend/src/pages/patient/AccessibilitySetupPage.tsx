@@ -48,11 +48,8 @@ export const AccessibilitySetupPage: React.FC = () => {
         setVisualQueueAlert(profile.visual_queue_alert ?? true);
         setEscortAssistance(profile.escort_assistance ?? false);
         setSpecialInstructions(profile.special_instructions || '');
-
-        if (appointmentId) {
-          await loadAppointmentStatus();
-        }
-      } catch (err) {
+        if (appointmentId) await loadAppointmentStatus();
+      } catch {
         setError('Unable to load your saved accessibility preferences right now.');
       } finally {
         setLoading(false);
@@ -81,7 +78,6 @@ export const AccessibilitySetupPage: React.FC = () => {
       }
 
       let status = appointmentStatus || await patientService.getAccessibilityStatus(appointmentId);
-
       if (!status.configured) {
         try {
           await patientService.createAccessibilityVisit(appointmentId, {
@@ -92,22 +88,21 @@ export const AccessibilitySetupPage: React.FC = () => {
             companion_present: profile.companion_present,
           });
           status = await patientService.getAccessibilityStatus(appointmentId);
-          setAppointmentStatus(status);
         } catch (err) {
           const statusCode = err instanceof Error && 'status' in err ? (err as { status?: number }).status : undefined;
           if (statusCode !== 409) throw err;
           status = await patientService.getAccessibilityStatus(appointmentId);
-          setAppointmentStatus(status);
         }
       }
 
       if (status.status === 'CREATED') {
-        status = { ...status, visit: await patientService.confirmAccessibilityVisit(appointmentId) };
-        setAppointmentStatus(status);
+        const visit = await patientService.confirmAccessibilityVisit(appointmentId);
+        status = { ...status, configured: true, status: 'PREFERENCES_CONFIRMED', visit };
       } else if (status.status !== 'PREFERENCES_CONFIRMED') {
         throw new Error('This appointment accessibility setup is not in a confirmable state.');
       }
 
+      setAppointmentStatus(status);
       setSavedSuccess(true);
       setTimeout(() => navigate(`/patient/appointments/${encodeURIComponent(appointmentId)}`), 700);
     } catch (err) {
@@ -132,11 +127,7 @@ export const AccessibilitySetupPage: React.FC = () => {
 
   return (
     <div className="accessibility-setup-page">
-      <PageHeader
-        eyebrow="Patient Communication & Accommodations"
-        title="Accessibility Setup"
-        description="Tell us how we can make your hospital visit smooth, clear, and accessible."
-      />
+      <PageHeader eyebrow="Patient Communication & Accommodations" title="Accessibility Setup" description="Tell us how we can make your hospital visit smooth, clear, and accessible." />
 
       {appointmentId && appointmentStatus && (
         <div className="save-success-banner" role="status">
@@ -145,13 +136,7 @@ export const AccessibilitySetupPage: React.FC = () => {
             : 'No appointment-specific accessibility visit is configured yet.'}
         </div>
       )}
-
-      {error && (
-        <div className="save-success-banner" role="alert" style={{ color: 'var(--color-error)' }}>
-          {error}
-        </div>
-      )}
-
+      {error && <div className="save-success-banner" role="alert" style={{ color: 'var(--color-error)' }}>{error}</div>}
       {savedSuccess && (
         <div className="save-success-banner" role="status">
           <span className="success-icon">✓</span>
@@ -164,36 +149,22 @@ export const AccessibilitySetupPage: React.FC = () => {
           <Card padding="large">
             <div className="wizard-step-header"><span className="step-number">Step 1</span><h2 className="step-title">Primary Communication Preference</h2></div>
             <p className="step-description">Select how you prefer to communicate with hospital doctors and clinical staff.</p>
-            <fieldset className="option-grid">
-              <legend className="sr-only">Communication Preference</legend>
-              <label className={`option-card ${commPref === 'ISL' ? 'selected' : ''}`}><input type="radio" name="commPref" value="ISL" checked={commPref === 'ISL'} onChange={() => setCommPref('ISL')} /><div className="option-content"><span className="option-icon">🤟</span><strong>Indian Sign Language (ISL)</strong><span>Requires qualified ISL interpreter for clinical conversations.</span></div></label>
-              <label className={`option-card ${commPref === 'TEXT' ? 'selected' : ''}`}><input type="radio" name="commPref" value="TEXT" checked={commPref === 'TEXT'} onChange={() => setCommPref('TEXT')} /><div className="option-content"><span className="option-icon">💬</span><span>Written Text & Chat</span><span>Prefer clear written text notes or live messaging on tablet.</span></div></label>
-              <label className={`option-card ${commPref === 'SPEECH_TO_TEXT' ? 'selected' : ''}`}><input type="radio" name="commPref" value="SPEECH_TO_TEXT" checked={commPref === 'SPEECH_TO_TEXT'} onChange={() => setCommPref('SPEECH_TO_TEXT')} /><div className="option-content"><span className="option-icon">🎙️</span><span>Speech-to-Text Transcription</span><span>Live automated or assisted captions during doctor dialogue.</span></div></label>
-              <label className={`option-card ${commPref === 'COMBINATION' ? 'selected' : ''}`}><input type="radio" name="commPref" value="COMBINATION" checked={commPref === 'COMBINATION'} onChange={() => setCommPref('COMBINATION')} /><div className="option-content"><span className="option-icon">🔄</span><span>Combination Support</span><span>Use ISL interpreter for clinical discussions + text for quick notes.</span></div></label>
+            <fieldset className="option-grid"><legend className="sr-only">Communication Preference</legend>
+              {(['ISL', 'TEXT', 'SPEECH_TO_TEXT', 'COMBINATION'] as CommunicationPreference[]).map((value) => (
+                <label key={value} className={`option-card ${commPref === value ? 'selected' : ''}`}>
+                  <input type="radio" name="commPref" value={value} checked={commPref === value} onChange={() => setCommPref(value)} />
+                  <div className="option-content"><span className="option-icon">{value === 'ISL' ? '🤟' : value === 'TEXT' ? '💬' : value === 'SPEECH_TO_TEXT' ? '🎙️' : '🔄'}</span><strong>{value === 'ISL' ? 'Indian Sign Language (ISL)' : value.replaceAll('_', ' ')}</strong><span>Saved as your communication preference.</span></div>
+                </label>
+              ))}
             </fieldset>
           </Card>
 
           <Card padding="large">
             <div className="wizard-step-header"><span className="step-number">Step 2</span><h2 className="step-title">Interpreter Accommodations</h2></div>
-            <div className="toggle-section">
-              <div className="toggle-info"><strong>Require Sign Language Interpreter</strong><p>AccessibleCare records the requirement for future qualified human interpreter coordination.</p></div>
-              <div className="toggle-buttons">
-                <button type="button" className={`toggle-btn ${interpReq ? 'active' : ''}`} onClick={() => setInterpReq(true)}>Yes</button>
-                <button type="button" className={`toggle-btn ${!interpReq ? 'active' : ''}`} onClick={() => setInterpReq(false)}>No</button>
-              </div>
-            </div>
-            {interpReq && (
-              <div className="sub-settings">
-                <h3 className="sub-title">Preferred Interpreter Delivery Mode</h3>
-                <fieldset className="option-grid mode-grid">
-                  <legend className="sr-only">Preferred Interpreter Delivery Mode</legend>
-                  <label className={`option-card ${interpMode === 'IN_PERSON' ? 'selected' : ''}`}><input type="radio" name="interpMode" value="IN_PERSON" checked={interpMode === 'IN_PERSON'} onChange={() => setInterpMode('IN_PERSON')} /><div className="option-content"><span className="option-icon">👤</span><strong>In-Person Interpreter</strong><span>Preferred delivery mode.</span></div></label>
-                  <label className={`option-card ${interpMode === 'REMOTE' ? 'selected' : ''}`}><input type="radio" name="interpMode" value="REMOTE" checked={interpMode === 'REMOTE'} onChange={() => setInterpMode('REMOTE')} /><div className="option-content"><span className="option-icon">📱</span><span>Video Remote (VRI)</span><span>Preferred remote delivery mode.</span></div></label>
-                  <label className={`option-card ${interpMode === 'EITHER' ? 'selected' : ''}`}><input type="radio" name="interpMode" value="EITHER" checked={interpMode === 'EITHER'} onChange={() => setInterpMode('EITHER')} /><div className="option-content"><span className="option-icon">✨</span><span>Either / First Available</span><span>Record either mode as acceptable.</span></div></label>
-                </fieldset>
-                <div className="checkbox-setting"><label className="checkbox-label"><input type="checkbox" checked={allowRemoteFallback} onChange={(e) => setAllowRemoteFallback(e.target.checked)} /><span><strong>Allow Remote Video Fallback</strong><br /><small style={{ color: 'var(--color-on-surface-variant)' }}>Records whether remote interpretation is acceptable; no automatic fallback is implemented in this phase.</small></span></label></div>
-              </div>
-            )}
+            <div className="toggle-section"><div className="toggle-info"><strong>Require Sign Language Interpreter</strong><p>AccessibleCare records the requirement for future qualified human interpreter coordination.</p></div><div className="toggle-buttons"><button type="button" className={`toggle-btn ${interpReq ? 'active' : ''}`} onClick={() => setInterpReq(true)}>Yes</button><button type="button" className={`toggle-btn ${!interpReq ? 'active' : ''}`} onClick={() => setInterpReq(false)}>No</button></div></div>
+            {interpReq && <div className="sub-settings"><h3 className="sub-title">Preferred Interpreter Delivery Mode</h3><fieldset className="option-grid mode-grid"><legend className="sr-only">Preferred Interpreter Delivery Mode</legend>
+              {(['IN_PERSON', 'REMOTE', 'EITHER'] as InterpreterMode[]).map((value) => <label key={value} className={`option-card ${interpMode === value ? 'selected' : ''}`}><input type="radio" name="interpMode" value={value} checked={interpMode === value} onChange={() => setInterpMode(value)} /><div className="option-content"><span className="option-icon">{value === 'IN_PERSON' ? '👤' : value === 'REMOTE' ? '📱' : '✨'}</span><span>{value === 'IN_PERSON' ? 'In-Person Interpreter' : value === 'REMOTE' ? 'Video Remote (VRI)' : 'Either / First Available'}</span><span>Saved preference only; coordination is not implemented here.</span></div></label>)}
+            </fieldset><div className="checkbox-setting"><label className="checkbox-label"><input type="checkbox" checked={allowRemoteFallback} onChange={(e) => setAllowRemoteFallback(e.target.checked)} /><span><strong>Allow Remote Video Fallback</strong><br /><small style={{ color: 'var(--color-on-surface-variant)' }}>Records whether remote interpretation is acceptable; no automatic fallback is implemented in this phase.</small></span></label></div></div>}
           </Card>
 
           <Card padding="large">
@@ -215,9 +186,7 @@ export const AccessibilitySetupPage: React.FC = () => {
               {existingVisitConfirmed ? 'Accessibility Setup Confirmed' : 'Confirm Existing Setup'}
             </Button>
           ) : (
-            <Button variant="primary" type="submit" size="large" disabled={saving}>
-              {saving ? 'Saving Settings...' : appointmentId ? 'Confirm Accessibility Setup' : 'Save & Update Setup'}
-            </Button>
+            <Button variant="primary" type="submit" size="large" disabled={saving}>{saving ? 'Saving Settings...' : appointmentId ? 'Confirm Accessibility Setup' : 'Save & Update Setup'}</Button>
           )}
         </div>
       </form>
