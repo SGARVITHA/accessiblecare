@@ -10,15 +10,9 @@ export interface AccessibilitySummaryCardProps {
   profile?: AccessibilityProfile;
 }
 
-export const AccessibilitySummaryCard: React.FC<AccessibilitySummaryCardProps> = ({
-  profile,
-}) => {
+export const AccessibilitySummaryCard: React.FC<AccessibilitySummaryCardProps> = ({ profile }) => {
   const navigate = useNavigate();
-
-  const preference = profile?.communication_preference || 'ISL';
-  const interpreterReq = profile?.interpreter_required ? 'Required (In-Person Preferred)' : 'Not Required';
-  const remoteFallback = profile?.allow_remote_fallback ? 'Active (VRI Backup Enabled)' : 'Disabled';
-  const instructions = profile?.special_instructions || 'Prefers clear visual alerts on room display and SMS notification.';
+  const configured = Boolean(profile?.id);
 
   return (
     <Card padding="large" className="ac-access-summary">
@@ -27,45 +21,42 @@ export const AccessibilitySummaryCard: React.FC<AccessibilitySummaryCardProps> =
           <span className="ac-access-summary__eyebrow">ACCESSIBILITY PROFILE</span>
           <h3 className="ac-access-summary__title">Your Communication Setup</h3>
         </div>
-        <StatusBadge status="confirmed" label="Setup Verified" />
+        <StatusBadge status={configured ? 'confirmed' : 'pending'} label={configured ? 'Setup Saved' : 'Not Configured'} />
       </div>
 
-      <div className="ac-access-summary__bento">
-        <div className="ac-access-summary__item">
-          <span className="ac-access-summary__label">Primary Preference</span>
-          <span className="ac-access-summary__value">
-            {preference === 'ISL' ? 'Indian Sign Language (ISL)' : preference}
-          </span>
+      {configured && profile ? (
+        <div className="ac-access-summary__bento">
+          <div className="ac-access-summary__item">
+            <span className="ac-access-summary__label">Primary Preference</span>
+            <span className="ac-access-summary__value">
+              {profile.communication_preference === 'ISL' ? 'Indian Sign Language (ISL)' : profile.communication_preference}
+            </span>
+          </div>
+          <div className="ac-access-summary__item">
+            <span className="ac-access-summary__label">Interpreter Support</span>
+            <span className="ac-access-summary__value">{profile.interpreter_required ? 'Required' : 'Not Required'}</span>
+          </div>
+          <div className="ac-access-summary__item">
+            <span className="ac-access-summary__label">Remote Acceptance</span>
+            <span className="ac-access-summary__value">{profile.allow_remote_fallback ? 'Accepted' : 'Not Accepted'}</span>
+          </div>
+          <div className="ac-access-summary__item">
+            <span className="ac-access-summary__label">Companion Preference</span>
+            <span className="ac-access-summary__value">{profile.companion_preference || (profile.companion_present ? 'Present' : 'Not Present')}</span>
+          </div>
         </div>
-
-        <div className="ac-access-summary__item">
-          <span className="ac-access-summary__label">Interpreter Support</span>
-          <span className="ac-access-summary__value">{interpreterReq}</span>
+      ) : (
+        <div className="ac-access-summary__instructions">
+          <span className="ac-access-summary__label">Current status</span>
+          <p className="ac-access-summary__text">
+            No saved accessibility profile is available yet. You can set your standing communication preferences here.
+          </p>
         </div>
-
-        <div className="ac-access-summary__item">
-          <span className="ac-access-summary__label">Remote VRI Fallback</span>
-          <span className="ac-access-summary__value">{remoteFallback}</span>
-        </div>
-
-        <div className="ac-access-summary__item">
-          <span className="ac-access-summary__label">Visual Assistance Alerts</span>
-          <span className="ac-access-summary__value">Visual Reception & Queue Flash Active</span>
-        </div>
-      </div>
-
-      <div className="ac-access-summary__instructions">
-        <span className="ac-access-summary__label">Special Notes for Hospital Staff</span>
-        <p className="ac-access-summary__text">{instructions}</p>
-      </div>
+      )}
 
       <div className="ac-access-summary__footer">
-        <Button
-          variant="secondary"
-          size="medium"
-          onClick={() => navigate('/patient/accessibility')}
-        >
-          Update Preferences
+        <Button variant="secondary" size="medium" onClick={() => navigate('/patient/accessibility')}>
+          {configured ? 'Update Preferences' : 'Set Up Accessibility'}
         </Button>
       </div>
     </Card>
