@@ -71,6 +71,7 @@ export const AccessibilitySetupPage: React.FC = () => {
           remote_accepted: profile.allow_remote_fallback,
           companion_present: profile.companion_present,
         });
+        await patientService.confirmAccessibilityVisit(appointmentId);
         setSavedSuccess(true);
         setTimeout(() => navigate(`/patient/appointments/${encodeURIComponent(appointmentId)}`), 700);
       } else {
@@ -111,7 +112,7 @@ export const AccessibilitySetupPage: React.FC = () => {
       {savedSuccess && (
         <div className="save-success-banner" role="alert">
           <span className="success-icon">✓</span>
-          <span>{appointmentId ? 'Your accessibility setup has been confirmed for this appointment.' : 'Your accessibility preferences have been updated.'}</span>
+          <span>{appointmentId ? 'Your accessibility preferences have been confirmed for this appointment.' : 'Your accessibility preferences have been updated.'}</span>
         </div>
       )}
 
@@ -162,7 +163,7 @@ export const AccessibilitySetupPage: React.FC = () => {
             <label className="checkbox-card"><input type="checkbox" checked={escortAssistance} onChange={(e) => setEscortAssistance(e.target.checked)} /><div><strong>Hospital Wayfinding & Escort Assistance</strong><p>Request visual escort staff to guide you between reception, labs, and doctor's room.</p></div></label>
             <label className="checkbox-card"><input type="checkbox" checked={companionPresent} onChange={(e) => setCompanionPresent(e.target.checked)} /><div><strong>Companion Present</strong><p>I will be accompanied by a family member or sign-literate companion.</p></div></label>
           </div>
-          <div className="instructions-area"><label htmlFor="special-notes" className="instructions-label">Additional Communication Notes for Hospital Desk:</label><textarea id="special-notes" className="instructions-textarea" rows={3} placeholder="e.g. Please tap gently on desk or send SMS when calling my name. Prefers front row waiting area."" value={specialInstructions} onChange={(e) => setSpecialInstructions(e.target.value)} /></div>
+          <div className="instructions-area"><label htmlFor="special-notes" className="instructions-label">Additional Communication Notes for Hospital Desk:</label><textarea id="special-notes" className="instructions-textarea" rows={3} placeholder="e.g. Please tap gently on desk or send SMS when calling my name. Prefers front row waiting area." value={specialInstructions} onChange={(e) => setSpecialInstructions(e.target.value)} /></div>
         </Card>
 
         <div className="form-actions-bar">
