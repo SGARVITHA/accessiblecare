@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import patientService from '../../services/patientService';
 import type { PatientDashboardSummary } from '../../types/patient';
+import { useAuth } from '../../hooks/useAuth';
 
 import NextStepCard from './components/NextStepCard';
 import UpcomingAppointmentCard from './components/UpcomingAppointmentCard';
@@ -17,6 +18,7 @@ import DashboardReminders from './components/DashboardReminders';
 import './PatientDashboard.css';
 
 export default function PatientDashboard() {
+  const { backendUser } = useAuth();
   const [summary, setSummary] = useState<PatientDashboardSummary | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,37 +86,26 @@ export default function PatientDashboard() {
     );
   }
 
-  const patientName = summary.patient.full_name || 'Rohan';
-  const mrn = summary.patient.mrn || 'P1024';
+  const patientName = backendUser?.full_name || 'Patient';
 
   return (
     <div className="ac-patient-dashboard">
-      {/* Patient Greeting & Header */}
       <PageHeader
-        eyebrow={`PATIENT PORTAL • MRN ${mrn}`}
+        eyebrow="PATIENT PORTAL"
         title={`Welcome back, ${patientName}`}
-        description="Your communication preferences and interpreter support are actively coordinated for today's visit."
-        action={
-          <StatusBadge status="confirmed" label="Visual Alerts Active" />
-        }
+        description="View your appointments, saved accessibility preferences, and the support available in this phase."
+        action={<StatusBadge status="confirmed" label="AccessibleCare Portal" />}
       />
 
-      {/* Primary Focal Area: Your Next Step Banner */}
       <NextStepCard appointment={summary.next_appointment} />
 
-      {/* Main Dashboard Responsive Grid */}
       <div className="ac-patient-dashboard__grid">
-        {/* Main Left Column */}
         <div className="ac-patient-dashboard__col-main">
-          <UpcomingAppointmentCard
-            appointment={summary.next_appointment}
-            interpreterStatus={summary.interpreter_status}
-          />
-          <TodayCareFlow />
+          <UpcomingAppointmentCard appointment={summary.next_appointment} />
+          <TodayCareFlow appointment={summary.next_appointment} />
           <SupportWayfinding />
         </div>
 
-        {/* Secondary Right Column */}
         <div className="ac-patient-dashboard__col-side">
           <AccessibilitySummaryCard profile={summary.accessibility_profile} />
           <InterpreterSummaryCard interpreterStatus={summary.interpreter_status} />
