@@ -1,0 +1,309 @@
+/* AccessibleCare Staff Dashboard Styles */
+
+.ac-staff-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* Metric Cards Strip */
+.ac-staff-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .ac-staff-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ac-staff-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.ac-staff-metric-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-surface-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ac-staff-metric-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.ac-staff-metric-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.ac-staff-metric-card__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ac-staff-metric-card__icon {
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-low);
+}
+
+.ac-staff-metric-card__value-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.ac-staff-metric-card__value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.ac-staff-metric-card__subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+}
+
+.ac-staff-metric-card--alert .ac-staff-metric-card__value {
+  color: var(--color-error);
+}
+
+.ac-staff-metric-card--alert .ac-staff-metric-card__icon {
+  background-color: var(--color-error-container);
+}
+
+/* Needs Attention Section */
+.ac-staff-attention-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ac-staff-attention-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ac-staff-attention-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.ac-staff-attention-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+}
+
+.ac-staff-attention-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .ac-staff-attention-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.ac-staff-action-card {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-surface-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-4);
+  transition: box-shadow 0.15s ease;
+}
+
+.ac-staff-action-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.ac-staff-action-card--alert {
+  border-left: 4px solid var(--color-error);
+}
+
+.ac-staff-action-card--coordinating {
+  border-left: 4px solid var(--color-secondary);
+}
+
+.ac-staff-action-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.ac-staff-action-card__badge-id {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.ac-staff-action-card__badge-id--alert {
+  background-color: var(--color-error-container);
+  color: var(--color-error);
+}
+
+.ac-staff-action-card__main-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ac-staff-action-card__title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.ac-staff-action-card__description {
+  font-size: 0.875rem;
+  color: var(--color-on-surface-variant);
+  margin: 0;
+}
+
+.ac-staff-action-card__requirement-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background-color: var(--color-surface-low);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface);
+  font-weight: 500;
+}
+
+.ac-staff-action-card__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+/* Appointments Queue Table Section */
+.ac-staff-roster-card {
+  background-color: var(--color-surface-lowest);
+  border: 1px solid var(--color-surface-base);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.ac-staff-roster-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+@media (min-width: 640px) {
+  .ac-staff-roster-toolbar {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.ac-staff-search-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background-color: var(--color-surface-low);
+  border: 1px solid var(--color-surface-high);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.ac-staff-search-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+  outline: none;
+}
+
+.ac-staff-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.ac-staff-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.ac-staff-table th {
+  padding: 10px 14px;
+  background-color: var(--color-surface-low);
+  color: var(--color-on-surface-variant);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--color-surface-base);
+}
+
+.ac-staff-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--color-surface-base);
+  color: var(--color-on-surface);
+  vertical-align: middle;
+}
+
+.ac-staff-table tr:hover td {
+  background-color: var(--color-surface-low);
+}
+
+.ac-staff-table tr.ac-staff-table__row--urgent td {
+  background-color: #fff9f9;
+}
+
+.ac-staff-table tr.ac-staff-table__row--urgent:hover td {
+  background-color: var(--color-error-container);
+}

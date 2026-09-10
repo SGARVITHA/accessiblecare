@@ -1,53 +1,36 @@
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import StaffHeader from '../components/layout/StaffHeader';
 
 export default function StaffLayout() {
-  const { backendUser, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/login', { replace: true });
-  };
+  const { backendUser } = useAuth();
 
   return (
-    <div data-layout="staff">
-      <header
+    <div
+      data-layout="staff"
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        width: '100%',
+        backgroundColor: 'var(--color-surface)',
+      }}
+    >
+      <StaffHeader
+        userFullName={backendUser?.full_name || undefined}
+        userRole={backendUser?.role || undefined}
+      />
+      <main
+        id="staff-main-content"
+        className="container-wide"
         style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '0.5rem 1.5rem',
-          backgroundColor: '#0f172a',
-          color: '#e2e8f0',
-          borderBottom: '1px solid #334155',
-          fontSize: '0.875rem',
+          flex: 1,
+          paddingTop: 'var(--space-6)',
+          paddingBottom: 'var(--space-8)',
         }}
       >
-        <div>
-          <strong>AccessibleCare</strong> — Staff Portal
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <span>
-            {backendUser?.full_name || 'Staff Member'} ({backendUser?.role || 'STAFF'})
-          </span>
-          <button
-            onClick={handleSignOut}
-            style={{
-              padding: '0.25rem 0.75rem',
-              backgroundColor: '#334155',
-              color: '#ffffff',
-              border: '1px solid #475569',
-              borderRadius: '0.25rem',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-            }}
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
-      <Outlet />
+        <Outlet />
+      </main>
     </div>
   );
 }

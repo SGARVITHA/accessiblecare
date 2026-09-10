@@ -14,13 +14,19 @@ import AppointmentDetailsPage from './pages/patient/AppointmentDetailsPage';
 import AccessibilitySetupPage from './pages/patient/AccessibilitySetupPage';
 import InterpreterStatusPage from './pages/patient/InterpreterStatusPage';
 import QuickCommunicationPage from './pages/patient/QuickCommunicationPage';
+
 import StaffDashboard from './pages/staff/StaffDashboard';
+import StaffAppointmentsPage from './pages/staff/StaffAppointmentsPage';
+import StaffAppointmentWorkspacePage from './pages/staff/StaffAppointmentWorkspacePage';
+import StaffEscalationsPage from './pages/staff/StaffEscalationsPage';
+
 import InterpreterDashboard from './pages/interpreter/InterpreterDashboard';
 import InterpreterRequestsPage from './pages/interpreter/InterpreterRequestsPage';
 import InterpreterRequestDetailPage from './pages/interpreter/InterpreterRequestDetailPage';
 import InterpreterAssignmentsPage from './pages/interpreter/InterpreterAssignmentsPage';
 import InterpreterAvailabilityPage from './pages/interpreter/InterpreterAvailabilityPage';
 import InterpreterSessionPage from './pages/interpreter/InterpreterSessionPage';
+
 import NotFound from './pages/NotFound';
 
 function RootRedirect() {
@@ -52,13 +58,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public login route */}
           <Route path="/login" element={<LoginPage />} />
-
-          {/* Root redirect */}
           <Route index element={<RootRedirect />} />
 
-          {/* Role-protected Patient routes */}
           <Route
             path="/patient"
             element={
@@ -75,7 +77,6 @@ function App() {
             <Route path="communication" element={<QuickCommunicationPage />} />
           </Route>
 
-          {/* Role-protected Staff routes */}
           <Route
             path="/staff"
             element={
@@ -85,9 +86,11 @@ function App() {
             }
           >
             <Route index element={<StaffDashboard />} />
+            <Route path="appointments" element={<StaffAppointmentsPage />} />
+            <Route path="appointments/:id" element={<StaffAppointmentWorkspacePage />} />
+            <Route path="escalations" element={<StaffEscalationsPage />} />
           </Route>
 
-          {/* Role-protected Interpreter routes */}
           <Route
             path="/interpreter"
             element={
@@ -104,7 +107,6 @@ function App() {
             <Route path="session/:id" element={<InterpreterSessionPage />} />
           </Route>
 
-          {/* 404 catch-all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
