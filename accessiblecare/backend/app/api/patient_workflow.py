@@ -1,7 +1,5 @@
 """Patient appointment and accessibility workflow endpoints."""
 
-from uuid import UUID
-
 from fastapi import APIRouter, Depends, status
 
 from app.core.auth import UserIdentity, get_current_user
@@ -32,7 +30,7 @@ async def list_my_appointments(
 
 @router.get("/appointments/{appointment_id}", response_model=AppointmentResponse)
 async def get_my_appointment(
-    appointment_id: UUID,
+    appointment_id: str,
     current_user: UserIdentity = Depends(get_current_user),
     service: PatientWorkflowService = Depends(get_service),
 ):
@@ -56,9 +54,13 @@ async def update_my_accessibility_profile(
     return service.upsert_accessibility_profile(current_user, payload)
 
 
-@router.post("/appointments/{appointment_id}/accessibility", response_model=AccessibilityVisitResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/appointments/{appointment_id}/accessibility",
+    response_model=AccessibilityVisitResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_accessibility_visit(
-    appointment_id: UUID,
+    appointment_id: str,
     payload: AccessibilityVisitRequest,
     current_user: UserIdentity = Depends(get_current_user),
     service: PatientWorkflowService = Depends(get_service),
@@ -68,7 +70,7 @@ async def create_accessibility_visit(
 
 @router.post("/appointments/{appointment_id}/accessibility/confirm", response_model=AccessibilityVisitResponse)
 async def confirm_accessibility_visit(
-    appointment_id: UUID,
+    appointment_id: str,
     current_user: UserIdentity = Depends(get_current_user),
     service: PatientWorkflowService = Depends(get_service),
 ):
@@ -77,7 +79,7 @@ async def confirm_accessibility_visit(
 
 @router.get("/appointments/{appointment_id}/accessibility/status", response_model=AccessibilityStatusResponse)
 async def get_accessibility_status(
-    appointment_id: UUID,
+    appointment_id: str,
     current_user: UserIdentity = Depends(get_current_user),
     service: PatientWorkflowService = Depends(get_service),
 ):
