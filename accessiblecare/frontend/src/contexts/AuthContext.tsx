@@ -10,10 +10,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [backendUser, setBackendUser] = useState<AuthMeResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  const clearAuthenticationState = useCallback(async (): Promise<void> => {
+    setSession(null);
+    setUser(null);
+    setBackendUser(null);
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // The local auth state is already cleared; Supabase cleanup is best-effort.
+    }
+  }, []);
+
   const fetchBackendIdentity = useCallback(async (token: string): Promise<AuthMeResponse | null> => {
     try {
-      const identity = await api.getAuthMe(token);
-      return identity;
+      return await api.getAuthMe(token);
     } catch {
       return null;
     }
@@ -25,19 +35,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!isMounted) return;
 
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-
       if (event === 'SIGNED_OUT' || !newSession) {
+        setSession(null);
+        setUser(null);
         setBackendUser(null);
         setIsLoading(false);
-      } else if (newSession.access_token) {
-        fetchBackendIdentity(newSession.access_token).then((identity) => {
-          if (isMounted) {
+        return;
+      }
+
+      setSession(newSession);
+      setUser(newSession.user);
+
+      if (newSession.access_token) {
+        fetchBackendIdentity(newSession.access_token).then(async (identity) => {
+          if (!isMounted) return;
+
+          if (!identity) {
+            await clearAuthenticationState();
+          } else {
             setBackendUser(identity);
-            setIsLoading(false);
           }
+          setIsLoading(false);
         });
+      } else {
+        setBackendUser(null);
+        setIsLoading(false);
       }
     });
 
@@ -45,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchBackendIdentity]);
+  }, [clearAuthenticationState, fetchBackendIdentity]);
 
   const signIn = async (
     email: string,
@@ -66,17 +88,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(data.session);
       setUser(data.user);
 
-      // Verify identity and authoritative role with FastAPI backend
+      // Verify identity and authoritative role with FastAPI backend.
       const identity = await fetchBackendIdentity(data.session.access_token);
       if (!identity) {
+        await clearAuthenticationState();
         setIsLoading(false);
-        return { success: false, error: 'Could not verify backend authorization identity' };
+        return {
+          success: false,
+          error: 'Your account could not be authorized for AccessibleCare. Please contact the hospital administrator.',
+        };
       }
 
       setBackendUser(identity);
       setIsLoading(false);
       return { success: true, role: identity.role };
     } catch (err: unknown) {
+      await clearAuthenticationState();
       setIsLoading(false);
       const message = err instanceof Error ? err.message : 'An unexpected error occurred';
       return { success: false, error: message };
@@ -98,9 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshUser = async (): Promise<void> => {
-    if (session?.access_token) {
-      const identity = await fetchBackendIdentity(session.access_token);
+    if (!session?.access_token) return;
+
+    const identity = await fetchBackendIdentity(session.access_token);
+    if (identity) {
       setBackendUser(identity);
+    } else {
+      await clearAuthenticationState();
     }
   };
 
