@@ -45,6 +45,8 @@ class AccessibilityProfileRequest(BaseModel):
 class AccessibilityProfileResponse(AccessibilityProfileRequest):
     id: UUID
     patient_id: UUID
+    created_at: str
+    updated_at: str
 
 
 class AccessibilityVisitRequest(BaseModel):
