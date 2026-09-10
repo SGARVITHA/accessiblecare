@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
+const ROLE_HOME: Record<string, string> = {
+  PATIENT: '/patient',
+  STAFF: '/staff',
+  INTERPRETER: '/interpreter',
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,21 +27,23 @@ export default function LoginPage() {
     setSubmitting(false);
 
     if (result.success && result.role) {
-      // Navigate to previous location or default role destination
-      const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
-      if (from && from !== '/login') {
-        navigate(from, { replace: true });
+      const userRole = result.role.trim().toUpperCase();
+      const roleHome = ROLE_HOME[userRole];
+
+      // Only use a previously requested path when it belongs to the user's
+      // backend-authoritative role. Never let an arbitrary URL/state bypass role routing.
+      const from = (location.state as { from?: { pathname?: string } })?.from?.pathname;
+      const rolePrefix = roleHome ? `${roleHome}/` : '';
+      const isRoleHome = from === roleHome;
+      const isRolePath = !!rolePrefix && from?.startsWith(rolePrefix);
+
+      if (roleHome && (isRoleHome || isRolePath)) {
+        navigate(from as string, { replace: true });
+      } else if (roleHome) {
+        navigate(roleHome, { replace: true });
       } else {
-        const userRole = result.role.toUpperCase();
-        if (userRole === 'PATIENT') {
-          navigate('/patient', { replace: true });
-        } else if (userRole === 'STAFF') {
-          navigate('/staff', { replace: true });
-        } else if (userRole === 'INTERPRETER') {
-          navigate('/interpreter', { replace: true });
-        } else {
-          navigate('/patient', { replace: true });
-        }
+        // Defensive fallback: signIn should never return success for an unknown role.
+        setErrorMsg('Your account has an invalid AccessibleCare role. Please contact the hospital administrator.');
       }
     } else {
       setErrorMsg(result.error || 'Login failed');
@@ -91,10 +99,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: '1rem' }}>
-            <label
-              htmlFor="email"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}
-            >
+            <label htmlFor="email" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>
               Email Address
             </label>
             <input
@@ -118,10 +123,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label
-              htmlFor="password"
-              style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}
-            >
+            <label htmlFor="password" style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, marginBottom: '0.25rem' }}>
               Password
             </label>
             <input
