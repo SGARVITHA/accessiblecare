@@ -8,12 +8,10 @@ import './AppointmentDetailsPage.css';
 export const AppointmentDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-
   const [appointment, setAppointment] = useState<Appointment | null>(null);
   const [accessibilityStatus, setAccessibilityStatus] = useState<AccessibilityStatus | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [checkedIn, setCheckedIn] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadData() {
@@ -34,7 +32,6 @@ export const AppointmentDetailsPage: React.FC = () => {
         } else {
           setAppointment(apptData);
           setAccessibilityStatus(statusData);
-          setCheckedIn(apptData.status === 'CHECKED_IN');
         }
       } catch (err) {
         console.error('Failed to load appointment details:', err);
@@ -43,46 +40,34 @@ export const AppointmentDetailsPage: React.FC = () => {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="appointment-details-loading">
-        <Card padding="large">
-          <div style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
-            <p style={{ color: 'var(--color-on-surface-variant)' }}>Loading appointment details...</p>
-          </div>
-        </Card>
-      </div>
-    );
+    return <div className="appointment-details-loading"><Card padding="large"><div style={{ textAlign: 'center', padding: 'var(--space-8)' }}><p style={{ color: 'var(--color-on-surface-variant)' }}>Loading appointment details...</p></div></Card></div>;
   }
 
   if (error || !appointment) {
     return (
       <div className="appointment-details-error">
         <PageHeader eyebrow="Appointment Details" title="Appointment Information" />
-        <Card padding="large">
-          <div style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
-            <h2 style={{ fontSize: '18px', color: 'var(--color-error)', marginBottom: 'var(--space-2)' }}>
-              Appointment Not Available
-            </h2>
-            <p style={{ color: 'var(--color-on-surface-variant)', marginBottom: 'var(--space-6)' }}>
-              {error || 'Unable to display appointment details.'}
-            </p>
-            <Button variant="ghost" onClick={() => navigate('/patient')}>
-              Return to Dashboard
-            </Button>
-          </div>
-        </Card>
+        <Card padding="large"><div style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
+          <h2 style={{ fontSize: '18px', color: 'var(--color-error)', marginBottom: 'var(--space-2)' }}>Appointment Not Available</h2>
+          <p style={{ color: 'var(--color-on-surface-variant)', marginBottom: 'var(--space-6)' }}>{error || 'Unable to display appointment details.'}</p>
+          <Button variant="ghost" onClick={() => navigate('/patient/appointments')}>Return to Appointments</Button>
+        </div></Card>
       </div>
     );
   }
+
+  const isBackendCheckedIn = appointment.status === 'CHECKED_IN';
 
   return (
     <div className="appointment-details-page">
       <nav className="appointment-breadcrumb" aria-label="Breadcrumb">
         <button onClick={() => navigate('/patient')} className="breadcrumb-link">Dashboard</button>
+        <span className="breadcrumb-separator">/</span>
+        <button onClick={() => navigate('/patient/appointments')} className="breadcrumb-link">Appointments</button>
         <span className="breadcrumb-separator">/</span>
         <span className="breadcrumb-current">Appointment {appointment.external_id || appointment.id}</span>
       </nav>
@@ -91,7 +76,7 @@ export const AppointmentDetailsPage: React.FC = () => {
         eyebrow={`Appointment Ref: ${appointment.external_id || appointment.id}`}
         title={`${appointment.department || 'Hospital'} Consultation`}
         description={`Scheduled with ${appointment.doctor_name || 'your doctor'}`}
-        action={<StatusBadge status={checkedIn ? 'ready' : 'confirmed'} label={checkedIn ? 'Checked In' : 'Scheduled'} />}
+        action={<StatusBadge status={isBackendCheckedIn ? 'ready' : 'confirmed'} label={isBackendCheckedIn ? 'Checked In' : appointment.status.replaceAll('_', ' ')} />}
       />
 
       <div className="appointment-grid">
@@ -107,18 +92,18 @@ export const AppointmentDetailsPage: React.FC = () => {
             </div>
 
             <div className="checkin-action-area">
-              {checkedIn ? (
+              {isBackendCheckedIn ? (
                 <div className="checked-in-banner">
-                  <span className="check-icon">✓</span>
+                  <span className="check-icon" aria-hidden="true">✓</span>
                   <div>
-                    <strong>Checked In Online</strong>
-                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>Please proceed to your appointment location.</p>
+                    <strong>Hospital check-in is recorded</strong>
+                    <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>This status comes from the appointment record.</p>
                   </div>
                 </div>
               ) : (
                 <div className="checkin-prompt">
-                  <p className="checkin-text">Ready for your visit? Complete online check-in upon arrival.</p>
-                  <Button variant="primary" size="large" onClick={() => setCheckedIn(true)}>Confirm Arrival & Check In Now</Button>
+                  <p className="checkin-text">Hospital check-in is not connected to AccessibleCare in this phase.</p>
+                  <Button variant="secondary" size="large" disabled>Check-in Not Available</Button>
                 </div>
               )}
             </div>
@@ -128,19 +113,17 @@ export const AppointmentDetailsPage: React.FC = () => {
             <h2 className="section-title">Accessibility Setup</h2>
             <div className="accessibility-support-box">
               <div className="support-status-line">
-                <span className="support-badge-icon">🤟</span>
+                <span className="support-badge-icon" aria-hidden="true">🤟</span>
                 <div>
                   <strong>{accessibilityStatus?.configured ? 'Accessibility preferences configured' : 'Accessibility support not configured yet'}</strong>
                   <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--color-on-surface-variant)' }}>
-                    {accessibilityStatus?.configured
-                      ? `Current state: ${accessibilityStatus.status.replaceAll('_', ' ')}`
-                      : 'Set your communication preferences for this appointment.'}
+                    {accessibilityStatus?.configured ? `Current state: ${accessibilityStatus.status.replaceAll('_', ' ')}` : 'Set your communication preferences for this appointment.'}
                   </p>
                 </div>
               </div>
               <div className="support-actions">
                 <Button variant="secondary" onClick={() => navigate('/patient/accessibility', { state: { appointmentId: appointment.id } })}>
-                  {accessibilityStatus?.configured ? 'Update Preferences' : 'Set Up Accessibility'}
+                  {accessibilityStatus?.configured ? 'View Accessibility Setup' : 'Set Up Accessibility'}
                 </Button>
               </div>
             </div>
@@ -153,15 +136,13 @@ export const AppointmentDetailsPage: React.FC = () => {
             <ol className="arrival-steps">
               <li>Proceed to your hospital and department reception.</li>
               <li>Present your appointment reference at reception.</li>
-              <li>Use your accessibility status to confirm support arrangements.</li>
+              <li>Use your accessibility status to review the support recorded for this appointment.</li>
             </ol>
           </Card>
 
           <Card padding="medium">
             <h3 className="side-title">Need Quick Assistance?</h3>
-            <p style={{ fontSize: '14px', color: 'var(--color-on-surface-variant)', marginBottom: 'var(--space-4)' }}>
-              Use pre-configured phrases to communicate with reception or request help.
-            </p>
+            <p style={{ fontSize: '14px', color: 'var(--color-on-surface-variant)', marginBottom: 'var(--space-4)' }}>Use routine phrases for reception or non-clinical assistance.</p>
             <Button variant="secondary" fullWidth onClick={() => navigate('/patient/communication')}>Open Quick Communication</Button>
           </Card>
         </div>
