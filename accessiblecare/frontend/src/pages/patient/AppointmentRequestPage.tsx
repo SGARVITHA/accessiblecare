@@ -27,12 +27,12 @@ export default function AppointmentRequestPage() {
   const [preferredDate, setPreferredDate] = useState('');
   const [preferredTime, setPreferredTime] = useState('');
   const [timeWindow, setTimeWindow] = useState('');
-  const [communicationPreference, setCommunicationPreference] = useState<CommunicationPreference>('ISL');
-  const [interpreterRequired, setInterpreterRequired] = useState(true);
-  const [preferredMode, setPreferredMode] = useState<InterpreterMode>('IN_PERSON');
-  const [remoteAccepted, setRemoteAccepted] = useState(true);
-  const [companionPresent, setCompanionPresent] = useState(false);
-  const [companionAssists, setCompanionAssists] = useState(false);
+  const [communicationPreference, setCommunicationPreference] = useState<CommunicationPreference | ''>('');
+  const [interpreterRequired, setInterpreterRequired] = useState<boolean | null>(null);
+  const [preferredMode, setPreferredMode] = useState<InterpreterMode | ''>('');
+  const [remoteAccepted, setRemoteAccepted] = useState<boolean | null>(null);
+  const [companionPresent, setCompanionPresent] = useState<boolean | null>(null);
+  const [companionAssists, setCompanionAssists] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +42,6 @@ export default function AppointmentRequestPage() {
     patientService.getAppointmentRequestDepartments()
       .then((rows) => {
         setDepartments(rows);
-        if (rows.length > 0) setDepartmentId(rows[0].id);
         setIsLoading(false);
       })
       .catch(() => {
@@ -52,13 +51,23 @@ export default function AppointmentRequestPage() {
   }, []);
 
   const canSubmit = useMemo(
-    () => Boolean(departmentId && preferredDate && (preferredTime || timeWindow) && !isSubmitting),
-    [departmentId, preferredDate, preferredTime, timeWindow, isSubmitting],
+    () => Boolean(
+      departmentId &&
+      preferredDate &&
+      (preferredTime || timeWindow) &&
+      communicationPreference &&
+      interpreterRequired !== null &&
+      companionPresent !== null &&
+      (!interpreterRequired || (preferredMode && remoteAccepted !== null)) &&
+      (!companionPresent || companionAssists !== null) &&
+      !isSubmitting,
+    ),
+    [departmentId, preferredDate, preferredTime, timeWindow, communicationPreference, interpreterRequired, preferredMode, remoteAccepted, companionPresent, companionAssists, isSubmitting],
   );
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit || !communicationPreference || interpreterRequired === null || companionPresent === null) return;
 
     setError(null);
     setIsSubmitting(true);
@@ -69,10 +78,10 @@ export default function AppointmentRequestPage() {
       preferred_time_window: timeWindow || null,
       communication_preference: communicationPreference,
       interpreter_required: interpreterRequired,
-      preferred_interpreter_mode: interpreterRequired ? preferredMode : null,
-      remote_accepted: interpreterRequired ? remoteAccepted : false,
+      preferred_interpreter_mode: interpreterRequired ? (preferredMode || null) : null,
+      remote_accepted: interpreterRequired ? remoteAccepted === true : false,
       companion_present: companionPresent,
-      companion_assists_communication: companionPresent ? companionAssists : false,
+      companion_assists_communication: companionPresent ? companionAssists === true : false,
     };
 
     try {
@@ -154,7 +163,8 @@ export default function AppointmentRequestPage() {
             <div className="ac-form-grid">
               <label className="ac-field">
                 <span>Preferred communication</span>
-                <select value={communicationPreference} onChange={(event) => setCommunicationPreference(event.target.value as CommunicationPreference)}>
+                <select value={communicationPreference} onChange={(event) => setCommunicationPreference(event.target.value as CommunicationPreference)} required>
+                  <option value="">Select a communication preference</option>
                   {communicationOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
@@ -162,8 +172,8 @@ export default function AppointmentRequestPage() {
               <fieldset className="ac-fieldset">
                 <legend>Interpreter required?</legend>
                 <div className="ac-choice-row">
-                  <label><input type="radio" checked={interpreterRequired} onChange={() => setInterpreterRequired(true)} /> Yes</label>
-                  <label><input type="radio" checked={!interpreterRequired} onChange={() => setInterpreterRequired(false)} /> No</label>
+                  <label><input type="radio" name="interpreter-required" checked={interpreterRequired === true} onChange={() => setInterpreterRequired(true)} /> Yes</label>
+                  <label><input type="radio" name="interpreter-required" checked={interpreterRequired === false} onChange={() => setInterpreterRequired(false)} /> No</label>
                 </div>
               </fieldset>
 
@@ -171,15 +181,16 @@ export default function AppointmentRequestPage() {
                 <>
                   <label className="ac-field">
                     <span>Preferred interpreter mode</span>
-                    <select value={preferredMode} onChange={(event) => setPreferredMode(event.target.value as InterpreterMode)}>
+                    <select value={preferredMode} onChange={(event) => setPreferredMode(event.target.value as InterpreterMode)} required>
+                      <option value="">Select a preferred mode</option>
                       {modeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                     </select>
                   </label>
                   <fieldset className="ac-fieldset">
                     <legend>Remote support accepted?</legend>
                     <div className="ac-choice-row">
-                      <label><input type="radio" checked={remoteAccepted} onChange={() => setRemoteAccepted(true)} /> Yes</label>
-                      <label><input type="radio" checked={!remoteAccepted} onChange={() => setRemoteAccepted(false)} /> No</label>
+                      <label><input type="radio" name="remote-accepted" checked={remoteAccepted === true} onChange={() => setRemoteAccepted(true)} /> Yes</label>
+                      <label><input type="radio" name="remote-accepted" checked={remoteAccepted === false} onChange={() => setRemoteAccepted(false)} /> No</label>
                     </div>
                   </fieldset>
                 </>
@@ -188,8 +199,8 @@ export default function AppointmentRequestPage() {
               <fieldset className="ac-fieldset">
                 <legend>Will a companion be present?</legend>
                 <div className="ac-choice-row">
-                  <label><input type="radio" checked={companionPresent} onChange={() => setCompanionPresent(true)} /> Yes</label>
-                  <label><input type="radio" checked={!companionPresent} onChange={() => setCompanionPresent(false)} /> No</label>
+                  <label><input type="radio" name="companion-present" checked={companionPresent === true} onChange={() => setCompanionPresent(true)} /> Yes</label>
+                  <label><input type="radio" name="companion-present" checked={companionPresent === false} onChange={() => setCompanionPresent(false)} /> No</label>
                 </div>
               </fieldset>
 
@@ -197,8 +208,8 @@ export default function AppointmentRequestPage() {
                 <fieldset className="ac-fieldset">
                   <legend>Should the companion assist with communication?</legend>
                   <div className="ac-choice-row">
-                    <label><input type="radio" checked={companionAssists} onChange={() => setCompanionAssists(true)} /> Yes</label>
-                    <label><input type="radio" checked={!companionAssists} onChange={() => setCompanionAssists(false)} /> No</label>
+                    <label><input type="radio" name="companion-assists" checked={companionAssists === true} onChange={() => setCompanionAssists(true)} /> Yes</label>
+                    <label><input type="radio" name="companion-assists" checked={companionAssists === false} onChange={() => setCompanionAssists(false)} /> No</label>
                   </div>
                 </fieldset>
               )}
