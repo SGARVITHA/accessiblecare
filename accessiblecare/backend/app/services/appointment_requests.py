@@ -209,86 +209,40 @@ class AppointmentRequestService:
         self, current_user: UserIdentity, request_id: UUID, payload: AppointmentRequestConfirm
     ) -> dict[str, Any]:
         hospital_id = self._staff_hospital_id(current_user)
-        try:
-            rows = (
-                self.supabase.table("appointment_requests")
-                .select("*")
-                .eq("id", str(request_id))
-                .eq("hospital_id", str(hospital_id))
-                .limit(1)
-                .execute()
-                .data
-            )
-        except Exception:
-            raise HTTPException(status_code=503, detail="Unable to load appointment request")
-        if not rows:
-            raise HTTPException(status_code=404, detail="Appointment request not found")
-        request = rows[0]
-        if request["status"] != "PENDING":
-            raise HTTPException(status_code=409, detail="Only pending requests can be confirmed")
+        department_id = payload.department_id
+        if department_id is None:
+            raise HTTPException(status_code=400, detail="Department is required for appointment confirmation")
 
-        department_id = payload.department_id or UUID(str(request["department_id"]))
         try:
-            department_rows = (
-                self.supabase.table("departments")
-                .select("id, hospital_id")
-                .eq("id", str(department_id))
-                .limit(1)
-                .execute()
-                .data
-            )
-        except Exception:
-            raise HTTPException(status_code=503, detail="Unable to verify department")
-        if not department_rows or str(department_rows[0]["hospital_id"]) != str(hospital_id):
-            raise HTTPException(status_code=400, detail="Department does not belong to staff hospital")
+            result = self.supabase.rpc(
+                "confirm_appointment_request",
+                {
+                    "p_request_id": str(request_id),
+                    "p_department_id": str(department_id),
+                    "p_appointment_time": payload.appointment_time.isoformat(),
+                    "p_doctor_name": payload.doctor_name,
+                },
+            ).execute()
+        except Exception as exc:
+            message = str(exc)
+            if "Staff access required" in message or "Staff hospital" in message:
+                raise HTTPException(status_code=403, detail="Staff access required")
+            if "Appointment request not found" in message:
+                raise HTTPException(status_code=404, detail="Appointment request not found")
+            if "Only pending requests" in message:
+                raise HTTPException(status_code=409, detail="Only pending requests can be confirmed")
+            if "Department does not belong" in message:
+                raise HTTPException(status_code=400, detail="Department does not belong to staff hospital")
+            raise HTTPException(status_code=503, detail="Unable to confirm appointment request") from exc
 
-        appointment_values = {
-            "hospital_id": str(hospital_id),
-            "patient_id": request["patient_id"],
-            "department_id": str(department_id),
-            "doctor_name": payload.doctor_name,
-            "appointment_time": payload.appointment_time.isoformat(),
-            "status": "SCHEDULED",
-            "source": "MANUAL",
-        }
-        try:
-            appointment_result = self.supabase.table("appointments").insert(appointment_values).execute()
-        except Exception:
-            raise HTTPException(status_code=503, detail="Unable to create appointment")
-        if not appointment_result.data:
-            raise HTTPException(status_code=503, detail="Appointment could not be created")
-        appointment = appointment_result.data[0]
-
-        reviewed_at = datetime.now(timezone.utc).isoformat()
-        try:
-            request_result = (
-                self.supabase.table("appointment_requests")
-                .update(
-                    {
-                        "status": "CONFIRMED",
-                        "appointment_id": appointment["id"],
-                        "reviewed_by": current_user.id,
-                        "reviewed_at": reviewed_at,
-                    }
-                )
-                .eq("id", str(request_id))
-                .eq("hospital_id", str(hospital_id))
-                .eq("status", "PENDING")
-                .execute()
-        except Exception:
-            raise HTTPException(
-                status_code=503,
-                detail="Appointment was created but request confirmation could not be recorded",
-            )
-        if not request_result.data:
-            raise HTTPException(
-                status_code=409,
-                detail="Appointment was created but request was no longer pending",
-            )
+        data = result.data
+        if not data:
+            raise HTTPException(status_code=503, detail="Appointment request could not be confirmed")
 
         return {
-            "request": self._response(request_result.data[0]),
-            "appointment": appointment,
+            "request": self.get_staff_request(current_user, request_id),
+            "appointment_id": data["appointment_id"],
+            "status": data["status"],
         }
 
     def reject(
