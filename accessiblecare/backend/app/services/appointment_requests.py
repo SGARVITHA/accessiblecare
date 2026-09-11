@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException
 
 from app.core.auth import UserIdentity
 from app.core.supabase import get_supabase_client
@@ -211,7 +211,20 @@ class AppointmentRequestService:
         hospital_id = self._staff_hospital_id(current_user)
         department_id = payload.department_id
         if department_id is None:
-            raise HTTPException(status_code=400, detail="Department is required for appointment confirmation")
+            try:
+                rows = (
+                    self.supabase.table("appointment_requests")
+                    .select("department_id")
+                    .eq("id", str(request_id))
+                    .eq("hospital_id", str(hospital_id))
+                    .limit(1)
+                    .execute()
+                    .data
+            except Exception:
+                raise HTTPException(status_code=503, detail="Unable to load appointment request")
+            if not rows:
+                raise HTTPException(status_code=404, detail="Appointment request not found")
+            department_id = UUID(str(rows[0]["department_id"]))
 
         try:
             result = self.supabase.rpc(
