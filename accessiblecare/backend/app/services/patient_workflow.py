@@ -99,9 +99,10 @@ class PatientWorkflowService:
             rows = (
                 self.supabase.table("accessibility_profiles")
                 .select(
-                    "id, patient_id, communication_preference, interpreter_required, "
-                    "preferred_interpreter_mode, remote_accepted, companion_preference"
-                )
+    "id, patient_id, communication_preference, interpreter_required, "
+    "preferred_interpreter_mode, remote_accepted, companion_preference, "
+    "created_at, updated_at"
+)
                 .eq("patient_id", str(patient_id))
                 .limit(1)
                 .execute()
