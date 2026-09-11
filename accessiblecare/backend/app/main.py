@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.auth import router as auth_router
 from app.api.patient_workflow import router as patient_workflow_router
+from app.api.appointment_requests import router as appointment_requests_router
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(patient_workflow_router)
+app.include_router(appointment_requests_router)
 
 
 @app.get("/health")
