@@ -64,27 +64,15 @@ class AppointmentRequestService:
         hospital = row.get("hospitals") or {}
         department = row.get("departments") or {}
         return {
-            "id": row["id"],
-            "patient_id": row["patient_id"],
-            "patient_name": profile.get("full_name"),
-            "patient_phone": profile.get("phone"),
-            "hospital": hospital.get("name"),
-            "department": department.get("name"),
-            "preferred_date": row["preferred_date"],
-            "preferred_time": row.get("preferred_time"),
-            "preferred_time_window": row.get("preferred_time_window"),
-            "communication_preference": row["communication_preference"],
-            "interpreter_required": row["interpreter_required"],
-            "preferred_interpreter_mode": row.get("preferred_interpreter_mode"),
-            "remote_accepted": row["remote_accepted"],
-            "companion_present": row["companion_present"],
-            "companion_assists_communication": row["companion_assists_communication"],
-            "status": row["status"],
-            "appointment_id": row.get("appointment_id"),
-            "reviewed_by": row.get("reviewed_by"),
-            "reviewed_at": row.get("reviewed_at"),
-            "created_at": row["created_at"],
-            "updated_at": row["updated_at"],
+            "id": row["id"], "patient_id": row["patient_id"], "patient_name": profile.get("full_name"),
+            "patient_phone": profile.get("phone"), "hospital": hospital.get("name"), "department": department.get("name"),
+            "preferred_date": row["preferred_date"], "preferred_time": row.get("preferred_time"),
+            "preferred_time_window": row.get("preferred_time_window"), "communication_preference": row["communication_preference"],
+            "interpreter_required": row["interpreter_required"], "preferred_interpreter_mode": row.get("preferred_interpreter_mode"),
+            "remote_accepted": row["remote_accepted"], "companion_present": row["companion_present"],
+            "companion_assists_communication": row["companion_assists_communication"], "status": row["status"],
+            "appointment_id": row.get("appointment_id"), "reviewed_by": row.get("reviewed_by"), "reviewed_at": row.get("reviewed_at"),
+            "created_at": row["created_at"], "updated_at": row["updated_at"],
         }
 
     def list_patient_departments(self, current_user: UserIdentity) -> list[dict[str, Any]]:
@@ -108,19 +96,13 @@ class AppointmentRequestService:
             raise HTTPException(status_code=403, detail="Department is not available for this patient")
 
         values = {
-            "patient_id": str(patient_id),
-            "hospital_id": str(patient_hospital),
-            "department_id": str(payload.department_id),
-            "preferred_date": payload.preferred_date.isoformat(),
-            "preferred_time": payload.preferred_time.isoformat() if payload.preferred_time else None,
-            "preferred_time_window": payload.preferred_time_window,
-            "communication_preference": payload.communication_preference.value,
+            "patient_id": str(patient_id), "hospital_id": str(patient_hospital), "department_id": str(payload.department_id),
+            "preferred_date": payload.preferred_date.isoformat(), "preferred_time": payload.preferred_time.isoformat() if payload.preferred_time else None,
+            "preferred_time_window": payload.preferred_time_window, "communication_preference": payload.communication_preference.value,
             "interpreter_required": payload.interpreter_required,
             "preferred_interpreter_mode": payload.preferred_interpreter_mode.value if payload.preferred_interpreter_mode else None,
-            "remote_accepted": payload.remote_accepted,
-            "companion_present": payload.companion_present,
-            "companion_assists_communication": payload.companion_assists_communication,
-            "status": "PENDING",
+            "remote_accepted": payload.remote_accepted, "companion_present": payload.companion_present,
+            "companion_assists_communication": payload.companion_assists_communication, "status": "PENDING",
         }
         try:
             result = self.supabase.table("appointment_requests").insert(values).execute()
@@ -178,16 +160,13 @@ class AppointmentRequestService:
                 raise HTTPException(status_code=404, detail="Appointment request not found")
             department_id = UUID(str(rows[0]["department_id"]))
         try:
-            result = self.supabase.rpc(
-                "confirm_appointment_request",
-                {
-                    "p_request_id": str(request_id),
-                    "p_department_id": str(department_id),
-                    "p_appointment_time": payload.appointment_time.isoformat(),
-                    "p_doctor_name": payload.doctor_name,
-                    "p_staff_user_id": current_user.id,
-                },
-            ).execute()
+            result = self.supabase.rpc("confirm_appointment_request", {
+                "p_request_id": str(request_id),
+                "p_department_id": str(department_id),
+                "p_appointment_time": payload.appointment_time.isoformat(),
+                "p_doctor_name": payload.doctor_name,
+                "p_staff_user_id": str(current_user.id),
+            }).execute()
         except Exception as exc:
             message = str(exc)
             if "Staff access required" in message or "Staff hospital" in message:
