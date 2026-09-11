@@ -5,9 +5,7 @@ import { StatusBadge } from '../../../components/ui/StatusBadge';
 import type { Appointment } from '../../../types/patient';
 import './NextStepCard.css';
 
-export interface NextStepCardProps {
-  appointment?: Appointment;
-}
+export interface NextStepCardProps { appointment?: Appointment; }
 
 export const NextStepCard: React.FC<NextStepCardProps> = ({ appointment }) => {
   const navigate = useNavigate();
@@ -20,15 +18,12 @@ export const NextStepCard: React.FC<NextStepCardProps> = ({ appointment }) => {
           <StatusBadge status="pending" label="No Upcoming Appointment" />
         </div>
         <div className="ac-next-step-card__body">
-          <h2 className="ac-next-step-card__headline">No upcoming appointment is available.</h2>
-          <p className="ac-next-step-card__context">
-            Your appointment information will appear here when it is available to AccessibleCare.
-          </p>
+          <h2 className="ac-next-step-card__headline">How can we help you today?</h2>
+          <p className="ac-next-step-card__context">Choose the path that matches your current hospital visit.</p>
         </div>
         <div className="ac-next-step-card__actions">
-          <Button variant="secondary" size="large" onClick={() => navigate('/patient/appointments')}>
-            View Appointments
-          </Button>
+          <Button variant="secondary" size="large" onClick={() => navigate('/patient/appointments')}>I already have an appointment</Button>
+          <Button variant="primary" size="large" onClick={() => navigate('/patient/appointment-request')}>I need to book an appointment</Button>
         </div>
       </section>
     );
@@ -45,24 +40,12 @@ export const NextStepCard: React.FC<NextStepCardProps> = ({ appointment }) => {
         <span id="next-step-heading" className="ac-next-step-card__eyebrow">YOUR NEXT STEP</span>
         <StatusBadge status="confirmed" label="Appointment Scheduled" />
       </div>
-
       <div className="ac-next-step-card__body">
         <h2 className="ac-next-step-card__headline">Review your scheduled appointment</h2>
-        <p className="ac-next-step-card__context">
-          <strong>{department}</strong> with <strong>{doctor}</strong>
-          <br />
-          {location} · {appointment.appointment_time}
-        </p>
+        <p className="ac-next-step-card__context"><strong>{department}</strong> with <strong>{doctor}</strong><br />{location} · {appointment.appointment_time}</p>
       </div>
-
       <div className="ac-next-step-card__actions">
-        <Button
-          variant="primary"
-          size="large"
-          onClick={() => navigate(`/patient/appointments/${encodeURIComponent(appointmentId)}`)}
-        >
-          View Appointment Details
-        </Button>
+        <Button variant="primary" size="large" onClick={() => navigate(`/patient/appointments/${encodeURIComponent(appointmentId)}`)}>View Appointment Details</Button>
       </div>
     </section>
   );
