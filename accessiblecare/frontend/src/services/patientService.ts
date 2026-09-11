@@ -1,194 +1,30 @@
 import { api } from '../lib/api';
-import type {
-  Patient,
-  Appointment,
-  AccessibilityProfile,
-  AccessibilityVisit,
-  AccessibilityStatus,
-  InterpreterStatus,
-  QuickMessage,
-  PatientDashboardSummary,
-  PatientNotification,
-  CommunicationPreference,
-  InterpreterMode,
-} from '../types/patient';
+import type { Patient, Appointment, AccessibilityProfile, AccessibilityVisit, AccessibilityStatus, InterpreterStatus, QuickMessage, PatientDashboardSummary, PatientNotification, CommunicationPreference, InterpreterMode, AppointmentRequest, AppointmentRequestCreate, AppointmentRequestDepartment } from '../types/patient';
 
-interface ApiAppointment {
-  id: string;
-  external_id?: string | null;
-  department?: string | null;
-  hospital?: string | null;
-  hospital_location?: string | null;
-  doctor_name?: string | null;
-  appointment_time: string;
-  status: string;
-  source: string;
-}
+interface ApiAppointment { id: string; external_id?: string | null; department?: string | null; hospital?: string | null; hospital_location?: string | null; doctor_name?: string | null; appointment_time: string; status: string; source: string; }
+interface ApiAccessibilityProfile { id: string; patient_id: string; communication_preference: CommunicationPreference; interpreter_required: boolean; preferred_interpreter_mode?: InterpreterMode | null; remote_accepted: boolean; companion_preference?: string | null; }
+interface ApiAccessibilityStatus { configured: boolean; status: AccessibilityStatus['status']; visit: AccessibilityVisit | null; }
 
-interface ApiAccessibilityProfile {
-  id: string;
-  patient_id: string;
-  communication_preference: CommunicationPreference;
-  interpreter_required: boolean;
-  preferred_interpreter_mode?: InterpreterMode | null;
-  remote_accepted: boolean;
-  companion_preference?: string | null;
-}
-
-interface ApiAccessibilityStatus {
-  configured: boolean;
-  status: AccessibilityStatus['status'];
-  visit: AccessibilityVisit | null;
-}
-
-const toAppointment = (row: ApiAppointment): Appointment => ({
-  id: row.id,
-  patient_id: '',
-  external_id: row.external_id || undefined,
-  doctor_name: row.doctor_name || undefined,
-  department: row.department || undefined,
-  hospital: row.hospital || undefined,
-  location: row.hospital_location || undefined,
-  appointment_time: formatAppointmentTime(row.appointment_time),
-  status: row.status,
-  source: row.source,
-});
-
-const formatAppointmentTime = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
-};
-
-const toProfile = (row: ApiAccessibilityProfile): AccessibilityProfile => ({
-  id: row.id,
-  patient_id: row.patient_id,
-  communication_preference: row.communication_preference,
-  interpreter_required: row.interpreter_required,
-  interpreter_mode: row.preferred_interpreter_mode || 'EITHER',
-  allow_remote_fallback: row.remote_accepted,
-  companion_present: row.companion_preference === 'PRESENT',
-  companion_preference: row.companion_preference || undefined,
-});
-
-const defaultProfile = (patientId = ''): AccessibilityProfile => ({
-  patient_id: patientId,
-  communication_preference: 'ISL',
-  interpreter_required: true,
-  interpreter_mode: 'IN_PERSON',
-  allow_remote_fallback: true,
-  companion_present: false,
-});
+const toAppointment = (row: ApiAppointment): Appointment => ({ id: row.id, patient_id: '', external_id: row.external_id || undefined, doctor_name: row.doctor_name || undefined, department: row.department || undefined, hospital: row.hospital || undefined, location: row.hospital_location || undefined, appointment_time: formatAppointmentTime(row.appointment_time), status: row.status, source: row.source });
+const formatAppointmentTime = (value: string): string => { const date = new Date(value); if (Number.isNaN(date.getTime())) return value; return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date); };
+const toProfile = (row: ApiAccessibilityProfile): AccessibilityProfile => ({ id: row.id, patient_id: row.patient_id, communication_preference: row.communication_preference, interpreter_required: row.interpreter_required, interpreter_mode: row.preferred_interpreter_mode || 'EITHER', allow_remote_fallback: row.remote_accepted, companion_present: row.companion_preference === 'PRESENT', companion_preference: row.companion_preference || undefined });
+const defaultProfile = (patientId = ''): AccessibilityProfile => ({ patient_id: patientId, communication_preference: 'ISL', interpreter_required: true, interpreter_mode: 'IN_PERSON', allow_remote_fallback: true, companion_present: false });
 
 export const patientService = {
-  async getPatientAppointments(): Promise<Appointment[]> {
-    const rows = await api.request<ApiAppointment[]>('/api/patients/me/appointments');
-    return rows.map(toAppointment);
-  },
-
-  async getPatientDashboard(): Promise<PatientDashboardSummary> {
-    const [appointments, profile] = await Promise.all([
-      this.getPatientAppointments(),
-      this.getAccessibilityProfile(),
-    ]);
-
-    const nextAppointment = appointments[0];
-    const patient: Patient = {
-      id: 'authenticated-patient',
-      full_name: 'Patient',
-      mrn: nextAppointment?.external_id || '—',
-      primary_language: profile.communication_preference === 'ISL' ? 'Indian Sign Language (ISL)' : profile.communication_preference,
-    };
-
-    return {
-      patient,
-      next_appointment: nextAppointment,
-      accessibility_profile: profile,
-      notifications: [],
-    };
-  },
-
-  async getAppointment(appointmentId: string): Promise<Appointment | null> {
-    try {
-      const row = await api.request<ApiAppointment>(`/api/appointments/${encodeURIComponent(appointmentId)}`);
-      return toAppointment(row);
-    } catch (error) {
-      if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) return null;
-      throw error;
-    }
-  },
-
-  async getAccessibilityProfile(): Promise<AccessibilityProfile> {
-    try {
-      const row = await api.request<ApiAccessibilityProfile>('/api/accessibility/profile');
-      return toProfile(row);
-    } catch (error) {
-      if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) {
-        return defaultProfile();
-      }
-      throw error;
-    }
-  },
-
-  async updateAccessibilityProfile(profile: Partial<AccessibilityProfile>): Promise<AccessibilityProfile> {
-    const current = await this.getAccessibilityProfile();
-    const payload = {
-      communication_preference: (profile.communication_preference || current.communication_preference),
-      interpreter_required: profile.interpreter_required ?? current.interpreter_required,
-      preferred_interpreter_mode: profile.interpreter_mode ?? current.interpreter_mode,
-      remote_accepted: profile.allow_remote_fallback ?? current.allow_remote_fallback,
-      companion_preference: profile.companion_present === undefined
-        ? current.companion_preference || null
-        : profile.companion_present ? 'PRESENT' : 'NOT_PRESENT',
-    };
-    const row = await api.request<ApiAccessibilityProfile>('/api/accessibility/profile', {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
-    return toProfile(row);
-  },
-
-  async createAccessibilityVisit(appointmentId: string, values: {
-    communication_preference: CommunicationPreference;
-    interpreter_required: boolean;
-    preferred_mode: InterpreterMode | null;
-    remote_accepted: boolean;
-    companion_present: boolean;
-  }): Promise<AccessibilityVisit> {
-    return api.request<AccessibilityVisit>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility`, {
-      method: 'POST',
-      body: JSON.stringify(values),
-    });
-  },
-
-  async confirmAccessibilityVisit(appointmentId: string): Promise<AccessibilityVisit> {
-    return api.request<AccessibilityVisit>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility/confirm`, {
-      method: 'POST',
-    });
-  },
-
-  async getAccessibilityStatus(appointmentId: string): Promise<AccessibilityStatus> {
-    return api.request<ApiAccessibilityStatus>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility/status`);
-  },
-
-  async getInterpreterStatus(_appointmentId: string): Promise<InterpreterStatus | null> {
-    // Interpreter coordination is intentionally not part of this vertical slice.
-    return null;
-  },
-
-  async sendQuickCommunication(category: 'arrival' | 'navigation' | 'help' | 'general', text: string): Promise<QuickMessage> {
-    // Quick communication remains outside this vertical slice and therefore has no API write yet.
-    return {
-      id: `local-${Date.now()}`,
-      patient_id: 'authenticated-patient',
-      category,
-      text,
-      created_at: new Date().toISOString(),
-    };
-  },
+  async getPatientAppointments(): Promise<Appointment[]> { const rows = await api.request<ApiAppointment[]>('/api/patients/me/appointments'); return rows.map(toAppointment); },
+  async getPatientDashboard(): Promise<PatientDashboardSummary> { const [appointments, profile] = await Promise.all([this.getPatientAppointments(), this.getAccessibilityProfile()]); const nextAppointment = appointments[0]; const patient: Patient = { id: 'authenticated-patient', full_name: 'Patient', mrn: nextAppointment?.external_id || '—', primary_language: profile.communication_preference === 'ISL' ? 'Indian Sign Language (ISL)' : profile.communication_preference }; return { patient, next_appointment: nextAppointment, accessibility_profile: profile, notifications: [] }; },
+  async getAppointment(appointmentId: string): Promise<Appointment | null> { try { const row = await api.request<ApiAppointment>(`/api/appointments/${encodeURIComponent(appointmentId)}`); return toAppointment(row); } catch (error) { if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) return null; throw error; } },
+  async getAccessibilityProfile(): Promise<AccessibilityProfile> { try { const row = await api.request<ApiAccessibilityProfile>('/api/accessibility/profile'); return toProfile(row); } catch (error) { if (error instanceof Error && 'status' in error && (error as { status?: number }).status === 404) return defaultProfile(); throw error; } },
+  async updateAccessibilityProfile(profile: Partial<AccessibilityProfile>): Promise<AccessibilityProfile> { const current = await this.getAccessibilityProfile(); const payload = { communication_preference: profile.communication_preference || current.communication_preference, interpreter_required: profile.interpreter_required ?? current.interpreter_required, preferred_interpreter_mode: profile.interpreter_mode ?? current.interpreter_mode, remote_accepted: profile.allow_remote_fallback ?? current.allow_remote_fallback, companion_preference: profile.companion_present === undefined ? current.companion_preference || null : profile.companion_present ? 'PRESENT' : 'NOT_PRESENT' }; const row = await api.request<ApiAccessibilityProfile>('/api/accessibility/profile', { method: 'PUT', body: JSON.stringify(payload) }); return toProfile(row); },
+  async createAccessibilityVisit(appointmentId: string, values: { communication_preference: CommunicationPreference; interpreter_required: boolean; preferred_mode: InterpreterMode | null; remote_accepted: boolean; companion_present: boolean }): Promise<AccessibilityVisit> { return api.request<AccessibilityVisit>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility`, { method: 'POST', body: JSON.stringify(values) }); },
+  async confirmAccessibilityVisit(appointmentId: string): Promise<AccessibilityVisit> { return api.request<AccessibilityVisit>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility/confirm`, { method: 'POST' }); },
+  async getAccessibilityStatus(appointmentId: string): Promise<AccessibilityStatus> { return api.request<ApiAccessibilityStatus>(`/api/appointments/${encodeURIComponent(appointmentId)}/accessibility/status`); },
+  async getInterpreterStatus(_appointmentId: string): Promise<InterpreterStatus | null> { return null; },
+  async sendQuickCommunication(category: 'arrival' | 'navigation' | 'help' | 'general', text: string): Promise<QuickMessage> { return { id: `local-${Date.now()}`, patient_id: 'authenticated-patient', category, text, created_at: new Date().toISOString() }; },
+  async getAppointmentRequestDepartments(): Promise<AppointmentRequestDepartment[]> { return api.request<AppointmentRequestDepartment[]>('/api/patients/me/departments'); },
+  async createAppointmentRequest(payload: AppointmentRequestCreate): Promise<AppointmentRequest> { return api.request<AppointmentRequest>('/api/appointment-requests', { method: 'POST', body: JSON.stringify(payload) }); },
+  async getAppointmentRequests(): Promise<AppointmentRequest[]> { return api.request<AppointmentRequest[]>('/api/patients/me/appointment-requests'); },
+  async getAppointmentRequest(requestId: string): Promise<AppointmentRequest> { return api.request<AppointmentRequest>(`/api/appointment-requests/${encodeURIComponent(requestId)}`); },
 };
 
 export default patientService;
