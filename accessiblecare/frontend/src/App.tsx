@@ -17,6 +17,8 @@ import AppointmentRequestsPage from './pages/patient/AppointmentRequestsPage';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffAppointmentsPage from './pages/staff/StaffAppointmentsPage';
 import StaffAppointmentWorkspacePage from './pages/staff/StaffAppointmentWorkspacePage';
+import StaffAppointmentRequestsPage from './pages/staff/StaffAppointmentRequestsPage';
+import StaffAppointmentRequestDetailPage from './pages/staff/StaffAppointmentRequestDetailPage';
 import StaffEscalationsPage from './pages/staff/StaffEscalationsPage';
 import InterpreterDashboard from './pages/interpreter/InterpreterDashboard';
 import InterpreterRequestsPage from './pages/interpreter/InterpreterRequestsPage';
@@ -57,6 +59,8 @@ function App() {
             <Route index element={<StaffDashboard />} />
             <Route path="appointments" element={<StaffAppointmentsPage />} />
             <Route path="appointments/:id" element={<StaffAppointmentWorkspacePage />} />
+            <Route path="appointment-requests" element={<StaffAppointmentRequestsPage />} />
+            <Route path="appointment-requests/:id" element={<StaffAppointmentRequestDetailPage />} />
             <Route path="escalations" element={<StaffEscalationsPage />} />
           </Route>
           <Route path="/interpreter" element={<ProtectedRoute allowedRoles={['INTERPRETER']}><InterpreterLayout /></ProtectedRoute>}>
@@ -73,4 +77,5 @@ function App() {
     </AuthProvider>
   );
 }
+
 export default App;
