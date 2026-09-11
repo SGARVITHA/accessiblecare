@@ -68,5 +68,3 @@ class AppointmentRequestConfirm(BaseModel):
 
 class AppointmentRequestReject(BaseModel):
     model_config = ConfigDict(extra="forbid")
-
-    reason: Optional[str] = None
