@@ -12,24 +12,22 @@ export type AppointmentRequestStatus = 'PENDING' | 'CONFIRMED' | 'REJECTED';
 export interface AppointmentRequestDepartment { id: string; name: string; }
 export interface AppointmentRequestCreate {
   department_id: string;
-  preferred_date: string;
-  preferred_time?: string | null;
-  preferred_time_window?: string | null;
+  reason_for_visit: string;
   communication_preference: CommunicationPreference;
   interpreter_required: boolean;
   preferred_interpreter_mode?: InterpreterMode | null;
   remote_accepted: boolean;
   companion_present: boolean;
   companion_assists_communication: boolean;
+  accessibility_note?: string | null;
 }
 export interface AppointmentRequest {
   id: string; patient_id: string; patient_name?: string | null; patient_phone?: string | null;
-  hospital?: string | null; department?: string | null; preferred_date: string;
-  preferred_time?: string | null; preferred_time_window?: string | null;
+  hospital?: string | null; department?: string | null; reason_for_visit: string;
   communication_preference: CommunicationPreference; interpreter_required: boolean;
   preferred_interpreter_mode?: InterpreterMode | null; remote_accepted: boolean;
   companion_present: boolean; companion_assists_communication: boolean;
-  status: AppointmentRequestStatus; appointment_id?: string | null;
+  accessibility_note?: string | null; status: AppointmentRequestStatus; appointment_id?: string | null;
   reviewed_by?: string | null; reviewed_at?: string | null; created_at: string; updated_at: string;
 }
 
