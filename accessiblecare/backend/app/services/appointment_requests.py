@@ -1,4 +1,4 @@
-"""Appointment request workflow services for patients and hospital staff."""
+"""Accessible visit request workflow services for patients and hospital staff."""
 
 from datetime import datetime, timezone
 from typing import Any
@@ -34,7 +34,7 @@ class AppointmentRequestService:
         except Exception:
             raise HTTPException(status_code=503, detail="Unable to verify patient hospital")
         if not rows or not rows[0].get("hospital_id"):
-            raise HTTPException(status_code=400, detail="Patient hospital is not configured")
+            raise HTTPException(status_code=400, detail="Hospital context is not configured for this visit")
         return UUID(str(rows[0]["hospital_id"]))
 
     def _staff_hospital_id(self, current_user: UserIdentity) -> UUID:
@@ -51,10 +51,11 @@ class AppointmentRequestService:
     @staticmethod
     def _request_select() -> str:
         return (
-            "id, patient_id, hospital_id, department_id, preferred_date, preferred_time, preferred_time_window, "
+            "id, patient_id, hospital_id, department_id, reason_for_visit, "
             "communication_preference, interpreter_required, preferred_interpreter_mode, remote_accepted, "
-            "companion_present, companion_assists_communication, status, appointment_id, reviewed_by, reviewed_at, "
-            "created_at, updated_at, patient_profiles(profiles(full_name, phone)), hospitals(name), departments(name)"
+            "companion_present, companion_assists_communication, accessibility_note, status, appointment_id, "
+            "reviewed_by, reviewed_at, created_at, updated_at, "
+            "patient_profiles(profiles(full_name, phone)), hospitals(name), departments(name)"
         )
 
     @staticmethod
@@ -64,15 +65,26 @@ class AppointmentRequestService:
         hospital = row.get("hospitals") or {}
         department = row.get("departments") or {}
         return {
-            "id": row["id"], "patient_id": row["patient_id"], "patient_name": profile.get("full_name"),
-            "patient_phone": profile.get("phone"), "hospital": hospital.get("name"), "department": department.get("name"),
-            "preferred_date": row["preferred_date"], "preferred_time": row.get("preferred_time"),
-            "preferred_time_window": row.get("preferred_time_window"), "communication_preference": row["communication_preference"],
-            "interpreter_required": row["interpreter_required"], "preferred_interpreter_mode": row.get("preferred_interpreter_mode"),
-            "remote_accepted": row["remote_accepted"], "companion_present": row["companion_present"],
-            "companion_assists_communication": row["companion_assists_communication"], "status": row["status"],
-            "appointment_id": row.get("appointment_id"), "reviewed_by": row.get("reviewed_by"), "reviewed_at": row.get("reviewed_at"),
-            "created_at": row["created_at"], "updated_at": row["updated_at"],
+            "id": row["id"],
+            "patient_id": row["patient_id"],
+            "patient_name": profile.get("full_name"),
+            "patient_phone": profile.get("phone"),
+            "hospital": hospital.get("name"),
+            "department": department.get("name"),
+            "reason_for_visit": row["reason_for_visit"],
+            "communication_preference": row["communication_preference"],
+            "interpreter_required": row["interpreter_required"],
+            "preferred_interpreter_mode": row.get("preferred_interpreter_mode"),
+            "remote_accepted": row["remote_accepted"],
+            "companion_present": row["companion_present"],
+            "companion_assists_communication": row["companion_assists_communication"],
+            "accessibility_note": row.get("accessibility_note"),
+            "status": row["status"],
+            "appointment_id": row.get("appointment_id"),
+            "reviewed_by": row.get("reviewed_by"),
+            "reviewed_at": row.get("reviewed_at"),
+            "created_at": row["created_at"],
+            "updated_at": row["updated_at"],
         }
 
     def list_patient_departments(self, current_user: UserIdentity) -> list[dict[str, Any]]:
@@ -93,23 +105,28 @@ class AppointmentRequestService:
         if not department_rows:
             raise HTTPException(status_code=404, detail="Department not found")
         if str(department_rows[0]["hospital_id"]) != str(patient_hospital):
-            raise HTTPException(status_code=403, detail="Department is not available for this patient")
+            raise HTTPException(status_code=403, detail="Department is not available for this hospital")
 
         values = {
-            "patient_id": str(patient_id), "hospital_id": str(patient_hospital), "department_id": str(payload.department_id),
-            "preferred_date": payload.preferred_date.isoformat(), "preferred_time": payload.preferred_time.isoformat() if payload.preferred_time else None,
-            "preferred_time_window": payload.preferred_time_window, "communication_preference": payload.communication_preference.value,
+            "patient_id": str(patient_id),
+            "hospital_id": str(patient_hospital),
+            "department_id": str(payload.department_id),
+            "reason_for_visit": payload.reason_for_visit,
+            "communication_preference": payload.communication_preference.value,
             "interpreter_required": payload.interpreter_required,
             "preferred_interpreter_mode": payload.preferred_interpreter_mode.value if payload.preferred_interpreter_mode else None,
-            "remote_accepted": payload.remote_accepted, "companion_present": payload.companion_present,
-            "companion_assists_communication": payload.companion_assists_communication, "status": "PENDING",
+            "remote_accepted": payload.remote_accepted,
+            "companion_present": payload.companion_present,
+            "companion_assists_communication": payload.companion_assists_communication,
+            "accessibility_note": payload.accessibility_note,
+            "status": "PENDING",
         }
         try:
             result = self.supabase.table("appointment_requests").insert(values).execute()
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to submit appointment request")
+            raise HTTPException(status_code=503, detail="Unable to submit accessible visit request")
         if not result.data:
-            raise HTTPException(status_code=503, detail="Appointment request could not be created")
+            raise HTTPException(status_code=503, detail="Accessible visit request could not be created")
         return self._response(result.data[0])
 
     def list_patient_requests(self, current_user: UserIdentity) -> list[dict[str, Any]]:
@@ -117,7 +134,7 @@ class AppointmentRequestService:
         try:
             rows = self.supabase.table("appointment_requests").select(self._request_select()).eq("patient_id", str(patient_id)).order("created_at", desc=True).execute().data
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to load appointment requests")
+            raise HTTPException(status_code=503, detail="Unable to load visit requests")
         return [self._response(row) for row in rows]
 
     def get_patient_request(self, current_user: UserIdentity, request_id: UUID) -> dict[str, Any]:
@@ -125,9 +142,9 @@ class AppointmentRequestService:
         try:
             rows = self.supabase.table("appointment_requests").select(self._request_select()).eq("id", str(request_id)).eq("patient_id", str(patient_id)).limit(1).execute().data
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to load appointment request")
+            raise HTTPException(status_code=503, detail="Unable to load visit request")
         if not rows:
-            raise HTTPException(status_code=404, detail="Appointment request not found")
+            raise HTTPException(status_code=404, detail="Visit request not found")
         return self._response(rows[0])
 
     def list_staff_requests(self, current_user: UserIdentity) -> list[dict[str, Any]]:
@@ -135,7 +152,7 @@ class AppointmentRequestService:
         try:
             rows = self.supabase.table("appointment_requests").select(self._request_select()).eq("hospital_id", str(hospital_id)).order("created_at", desc=True).execute().data
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to load appointment requests")
+            raise HTTPException(status_code=503, detail="Unable to load visit requests")
         return [self._response(row) for row in rows]
 
     def get_staff_request(self, current_user: UserIdentity, request_id: UUID) -> dict[str, Any]:
@@ -143,9 +160,9 @@ class AppointmentRequestService:
         try:
             rows = self.supabase.table("appointment_requests").select(self._request_select()).eq("id", str(request_id)).eq("hospital_id", str(hospital_id)).limit(1).execute().data
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to load appointment request")
+            raise HTTPException(status_code=503, detail="Unable to load visit request")
         if not rows:
-            raise HTTPException(status_code=404, detail="Appointment request not found")
+            raise HTTPException(status_code=404, detail="Visit request not found")
         return self._response(rows[0])
 
     def confirm(self, current_user: UserIdentity, request_id: UUID, payload: AppointmentRequestConfirm) -> dict[str, Any]:
@@ -155,9 +172,9 @@ class AppointmentRequestService:
             try:
                 rows = self.supabase.table("appointment_requests").select("department_id").eq("id", str(request_id)).eq("hospital_id", str(hospital_id)).limit(1).execute().data
             except Exception:
-                raise HTTPException(status_code=503, detail="Unable to load appointment request")
+                raise HTTPException(status_code=503, detail="Unable to load visit request")
             if not rows:
-                raise HTTPException(status_code=404, detail="Appointment request not found")
+                raise HTTPException(status_code=404, detail="Visit request not found")
             department_id = UUID(str(rows[0]["department_id"]))
         try:
             result = self.supabase.rpc("confirm_appointment_request", {
@@ -172,15 +189,15 @@ class AppointmentRequestService:
             if "Staff access required" in message or "Staff hospital" in message:
                 raise HTTPException(status_code=403, detail="Staff access required")
             if "Appointment request not found" in message:
-                raise HTTPException(status_code=404, detail="Appointment request not found")
+                raise HTTPException(status_code=404, detail="Visit request not found")
             if "Only pending requests" in message:
-                raise HTTPException(status_code=409, detail="Only pending requests can be confirmed")
+                raise HTTPException(status_code=409, detail="Only pending visit requests can be confirmed")
             if "Department does not belong" in message:
                 raise HTTPException(status_code=400, detail="Department does not belong to staff hospital")
-            raise HTTPException(status_code=503, detail="Unable to confirm appointment request") from exc
+            raise HTTPException(status_code=503, detail="Unable to confirm appointment") from exc
         data = result.data
         if not data:
-            raise HTTPException(status_code=503, detail="Appointment request could not be confirmed")
+            raise HTTPException(status_code=503, detail="Appointment could not be created")
         return {"request": self.get_staff_request(current_user, request_id), "appointment_id": data["appointment_id"], "status": data["status"]}
 
     def reject(self, current_user: UserIdentity, request_id: UUID, payload: AppointmentRequestReject) -> dict[str, Any]:
@@ -188,12 +205,12 @@ class AppointmentRequestService:
         try:
             rows = self.supabase.table("appointment_requests").select("*").eq("id", str(request_id)).eq("hospital_id", str(hospital_id)).eq("status", "PENDING").limit(1).execute().data
             if not rows:
-                raise HTTPException(status_code=404, detail="Pending appointment request not found")
+                raise HTTPException(status_code=404, detail="Pending visit request not found")
             result = self.supabase.table("appointment_requests").update({"status": "REJECTED", "reviewed_by": current_user.id, "reviewed_at": datetime.now(timezone.utc).isoformat()}).eq("id", str(request_id)).eq("hospital_id", str(hospital_id)).eq("status", "PENDING").execute()
         except HTTPException:
             raise
         except Exception:
-            raise HTTPException(status_code=503, detail="Unable to reject appointment request")
+            raise HTTPException(status_code=503, detail="Unable to reject visit request")
         if not result.data:
-            raise HTTPException(status_code=409, detail="Appointment request could not be rejected")
+            raise HTTPException(status_code=409, detail="Visit request could not be rejected")
         return self._response(result.data[0])
