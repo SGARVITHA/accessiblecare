@@ -7,32 +7,32 @@ import patientService from '../../services/patientService';
 import type { AppointmentRequestCreate, AppointmentRequestDepartment, CommunicationPreference, InterpreterMode } from '../../types/patient';
 import './AppointmentRequestPage.css';
 
-const communicationOptions: Array<{ value: CommunicationPreference; label: string }> = [
-  { value: 'ISL', label: 'Indian Sign Language (ISL)' },
-  { value: 'TEXT', label: 'Text' },
-  { value: 'SPEECH_TO_TEXT', label: 'Speech-to-text' },
-  { value: 'COMBINATION', label: 'Combination' },
+const communicationOptions: Array<{ value: CommunicationPreference; title: string; description: string; icon: string }> = [
+  { value: 'ISL', title: 'Indian Sign Language', description: 'I prefer to communicate using ISL.', icon: 'ISL' },
+  { value: 'TEXT', title: 'Text', description: 'I prefer written communication.', icon: 'Aa' },
+  { value: 'SPEECH_TO_TEXT', title: 'Speech-to-text', description: 'I prefer spoken communication with text support.', icon: 'STT' },
+  { value: 'COMBINATION', title: 'Combination', description: 'I am comfortable using more than one method.', icon: '＋' },
 ];
 
-const modeOptions: Array<{ value: InterpreterMode; label: string }> = [
-  { value: 'IN_PERSON', label: 'In-person preferred' },
-  { value: 'REMOTE', label: 'Remote preferred' },
-  { value: 'EITHER', label: 'Either' },
+const modeOptions: Array<{ value: InterpreterMode; title: string; description: string }> = [
+  { value: 'IN_PERSON', title: 'In-person', description: 'An interpreter physically present during my visit.' },
+  { value: 'REMOTE', title: 'Remote', description: 'An interpreter joining remotely by video.' },
+  { value: 'EITHER', title: 'Either works', description: 'In-person or remote support is okay.' },
 ];
 
 export default function AppointmentRequestPage() {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [departments, setDepartments] = useState<AppointmentRequestDepartment[]>([]);
   const [departmentId, setDepartmentId] = useState('');
-  const [preferredDate, setPreferredDate] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
-  const [timeWindow, setTimeWindow] = useState('');
+  const [reasonForVisit, setReasonForVisit] = useState('');
   const [communicationPreference, setCommunicationPreference] = useState<CommunicationPreference | ''>('');
   const [interpreterRequired, setInterpreterRequired] = useState<boolean | null>(null);
   const [preferredMode, setPreferredMode] = useState<InterpreterMode | ''>('');
   const [remoteAccepted, setRemoteAccepted] = useState<boolean | null>(null);
   const [companionPresent, setCompanionPresent] = useState<boolean | null>(null);
   const [companionAssists, setCompanionAssists] = useState<boolean | null>(null);
+  const [accessibilityNote, setAccessibilityNote] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,55 +40,55 @@ export default function AppointmentRequestPage() {
 
   useEffect(() => {
     patientService.getAppointmentRequestDepartments()
-      .then((rows) => {
-        setDepartments(rows);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setError('We couldn’t load the hospital departments right now.');
-        setIsLoading(false);
-      });
+      .then((rows) => setDepartments(rows))
+      .catch(() => setError('We couldn’t load the hospital departments right now.'))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  const canSubmit = useMemo(
-    () => Boolean(
-      departmentId &&
-      preferredDate &&
-      (preferredTime || timeWindow) &&
-      communicationPreference &&
-      interpreterRequired !== null &&
-      companionPresent !== null &&
-      (!interpreterRequired || (preferredMode && remoteAccepted !== null)) &&
-      (!companionPresent || companionAssists !== null) &&
-      !isSubmitting,
-    ),
-    [departmentId, preferredDate, preferredTime, timeWindow, communicationPreference, interpreterRequired, preferredMode, remoteAccepted, companionPresent, companionAssists, isSubmitting],
+  const stepOneValid = Boolean(departmentId && reasonForVisit.trim());
+  const stepTwoValid = Boolean(communicationPreference);
+  const stepThreeValid = interpreterRequired !== null && (!interpreterRequired || (preferredMode && remoteAccepted !== null));
+  const stepFourValid = companionPresent !== null && (!companionPresent || companionAssists !== null);
+
+  const selectedDepartment = departments.find((department) => department.id === departmentId)?.name || 'Not selected';
+  const communicationLabel = communicationOptions.find((option) => option.value === communicationPreference)?.title || 'Not selected';
+  const modeLabel = modeOptions.find((option) => option.value === preferredMode)?.title || 'Not required';
+
+  const canSubmit = useMemo(() =>
+    stepOneValid && stepTwoValid && stepThreeValid && stepFourValid && !isSubmitting,
+    [stepOneValid, stepTwoValid, stepThreeValid, stepFourValid, isSubmitting],
   );
+
+  const goNext = () => {
+    setError(null);
+    if (step === 1 && !stepOneValid) { setError('Please select a department and tell us the reason for your visit.'); return; }
+    if (step === 2 && !stepTwoValid) { setError('Please choose how you prefer to communicate.'); return; }
+    if (step === 3 && !stepThreeValid) { setError('Please complete the interpreter preferences.'); return; }
+    if (step === 4 && !stepFourValid) { setError('Please complete the companion preferences.'); return; }
+    setStep((current) => Math.min(5, current + 1));
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!canSubmit || !communicationPreference || interpreterRequired === null || companionPresent === null) return;
-
     setError(null);
     setIsSubmitting(true);
     const payload: AppointmentRequestCreate = {
       department_id: departmentId,
-      preferred_date: preferredDate,
-      preferred_time: preferredTime || null,
-      preferred_time_window: timeWindow || null,
+      reason_for_visit: reasonForVisit.trim(),
       communication_preference: communicationPreference,
       interpreter_required: interpreterRequired,
       preferred_interpreter_mode: interpreterRequired ? (preferredMode || null) : null,
       remote_accepted: interpreterRequired ? remoteAccepted === true : false,
       companion_present: companionPresent,
       companion_assists_communication: companionPresent ? companionAssists === true : false,
+      accessibility_note: accessibilityNote.trim() || null,
     };
-
     try {
       await patientService.createAppointmentRequest(payload);
       setSubmitted(true);
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'We couldn’t submit your request right now.');
+      setError(requestError instanceof Error ? requestError.message : 'We couldn’t send your request right now.');
     } finally {
       setIsSubmitting(false);
     }
@@ -98,130 +98,183 @@ export default function AppointmentRequestPage() {
     return (
       <div className="ac-appointment-request-page">
         <Card padding="large" className="ac-appointment-request-page__success">
-          <span className="ac-appointment-request-page__eyebrow">REQUEST SUBMITTED</span>
-          <h1 className="headline-medium">Your appointment request is waiting for hospital confirmation.</h1>
-          <p className="body-large">
-            The hospital will review your requested department, preferred time, and accessibility requirements before confirming an appointment.
-          </p>
+          <div className="ac-status-icon" aria-hidden="true">✓</div>
+          <span className="ac-appointment-request-page__eyebrow">REQUEST SENT</span>
+          <h1 className="headline-medium">Your request has been sent to the hospital.</h1>
+          <p className="body-large">Your accessibility requirements have been included. Hospital staff will review your request and confirm the actual appointment details.</p>
+          <div className="ac-pending-banner">
+            <strong>PENDING HOSPITAL CONFIRMATION</strong>
+            <span>Your appointment date, time and doctor will appear here after the hospital confirms your visit.</span>
+          </div>
           <div className="ac-appointment-request-page__actions">
-            <Button variant="primary" size="large" onClick={() => navigate('/patient/appointment-requests')}>
-              View My Requests
-            </Button>
-            <Button variant="secondary" size="large" onClick={() => navigate('/patient')}>
-              Back to Dashboard
-            </Button>
+            <Button variant="primary" size="large" onClick={() => navigate('/patient/appointment-requests')}>View My Requests</Button>
+            <Button variant="secondary" size="large" onClick={() => navigate('/patient')}>Back to Dashboard</Button>
           </div>
         </Card>
       </div>
     );
   }
 
-  if (isLoading) {
-    return <p className="body-large ac-appointment-request-page__loading">Loading appointment request options...</p>;
-  }
+  if (isLoading) return <p className="body-large ac-appointment-request-page__loading">Preparing your visit request...</p>;
 
   return (
     <div className="ac-appointment-request-page">
       <PageHeader
-        eyebrow="APPOINTMENT REQUEST"
-        title="Request an appointment"
-        description="Tell the hospital when you would prefer to visit and what communication support you need. The hospital confirms the appointment."
+        eyebrow="ACCESSIBLE VISIT REQUEST"
+        title="Let’s make your visit accessible"
+        description="Tell us what you need at the hospital. We’ll share these requirements with the staff handling your visit."
       />
 
+      <div className="ac-request-progress" aria-label={`Step ${step} of 5`}>
+        {[1, 2, 3, 4, 5].map((item) => (
+          <div key={item} className={`ac-request-progress__item ${item <= step ? 'is-active' : ''}`}>
+            <span>{item}</span>
+            <small>{['Visit', 'Communication', 'Interpreter', 'Companion', 'Review'][item - 1]}</small>
+          </div>
+        ))}
+      </div>
+
       <form onSubmit={submit} className="ac-appointment-request-page__form">
-        <Card padding="large">
-          <div className="ac-appointment-request-page__section">
-            <h2 className="title-large">Appointment preferences</h2>
-            <div className="ac-form-grid">
+        {step === 1 && (
+          <Card padding="large">
+            <div className="ac-appointment-request-page__section">
+              <span className="ac-section-kicker">STEP 1 OF 5</span>
+              <h2 className="title-large">Tell us about your visit</h2>
+              <p className="body-medium ac-section-intro">You’re requesting support after arriving at the hospital. The hospital team will decide and enter the appointment time.</p>
               <label className="ac-field">
-                <span>Department</span>
+                <span>Which department do you need to visit?</span>
                 <select value={departmentId} onChange={(event) => setDepartmentId(event.target.value)} required>
                   <option value="">Select a department</option>
                   {departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}
                 </select>
               </label>
               <label className="ac-field">
-                <span>Preferred date</span>
-                <input type="date" value={preferredDate} onChange={(event) => setPreferredDate(event.target.value)} required />
-              </label>
-              <label className="ac-field">
-                <span>Preferred time</span>
-                <input type="time" value={preferredTime} onChange={(event) => setPreferredTime(event.target.value)} />
-              </label>
-              <label className="ac-field">
-                <span>Or preferred time window</span>
-                <input type="text" value={timeWindow} onChange={(event) => setTimeWindow(event.target.value)} placeholder="e.g. Morning" />
+                <span>What is the reason for your visit?</span>
+                <textarea value={reasonForVisit} onChange={(event) => setReasonForVisit(event.target.value)} placeholder="For example, I need to see a doctor about..." rows={4} required />
+                <small>This helps hospital staff understand which service you need. You do not need to provide medical history here.</small>
               </label>
             </div>
-            <p className="ac-field-help">Provide either a preferred time or a time window.</p>
-          </div>
-        </Card>
+          </Card>
+        )}
 
-        <Card padding="large">
-          <div className="ac-appointment-request-page__section">
-            <h2 className="title-large">Accessibility requirements</h2>
-            <div className="ac-form-grid">
-              <label className="ac-field">
-                <span>Preferred communication</span>
-                <select value={communicationPreference} onChange={(event) => setCommunicationPreference(event.target.value as CommunicationPreference)} required>
-                  <option value="">Select a communication preference</option>
-                  {communicationOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                </select>
-              </label>
+        {step === 2 && (
+          <Card padding="large">
+            <div className="ac-appointment-request-page__section">
+              <span className="ac-section-kicker">STEP 2 OF 5</span>
+              <h2 className="title-large">How do you prefer to communicate?</h2>
+              <p className="body-medium ac-section-intro">Choose the option that works best for you. You can tell us more about interpreter support next.</p>
+              <div className="ac-option-grid">
+                {communicationOptions.map((option) => (
+                  <button type="button" key={option.value} className={`ac-option-card ${communicationPreference === option.value ? 'is-selected' : ''}`} onClick={() => setCommunicationPreference(option.value)} aria-pressed={communicationPreference === option.value}>
+                    <span className="ac-option-card__icon" aria-hidden="true">{option.icon}</span>
+                    <span className="ac-option-card__content"><strong>{option.title}</strong><small>{option.description}</small></span>
+                    <span className="ac-option-card__check" aria-hidden="true">{communicationPreference === option.value ? '✓' : ''}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+        )}
 
-              <fieldset className="ac-fieldset">
-                <legend>Interpreter required?</legend>
-                <div className="ac-choice-row">
-                  <label><input type="radio" name="interpreter-required" checked={interpreterRequired === true} onChange={() => setInterpreterRequired(true)} /> Yes</label>
-                  <label><input type="radio" name="interpreter-required" checked={interpreterRequired === false} onChange={() => setInterpreterRequired(false)} /> No</label>
-                </div>
-              </fieldset>
-
+        {step === 3 && (
+          <Card padding="large">
+            <div className="ac-appointment-request-page__section">
+              <span className="ac-section-kicker">STEP 3 OF 5</span>
+              <h2 className="title-large">Would you like interpreter support?</h2>
+              <p className="body-medium ac-section-intro">We’ll use this preference to help hospital staff arrange the right communication support.</p>
+              <div className="ac-choice-cards ac-choice-cards--two">
+                {([true, false] as const).map((value) => (
+                  <button type="button" key={String(value)} className={`ac-choice-card ${interpreterRequired === value ? 'is-selected' : ''}`} onClick={() => { setInterpreterRequired(value); if (!value) { setPreferredMode(''); setRemoteAccepted(null); } }} aria-pressed={interpreterRequired === value}>
+                    <strong>{value ? 'Yes, I need an interpreter' : 'No, I do not need one'}</strong>
+                    <small>{value ? 'Continue to tell us what type of support works best.' : 'I can communicate using my selected preference.'}</small>
+                  </button>
+                ))}
+              </div>
               {interpreterRequired && (
-                <>
-                  <label className="ac-field">
-                    <span>Preferred interpreter mode</span>
-                    <select value={preferredMode} onChange={(event) => setPreferredMode(event.target.value as InterpreterMode)} required>
-                      <option value="">Select a preferred mode</option>
-                      {modeOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                  </label>
+                <div className="ac-conditional-section">
+                  <h3 className="title-medium">What works best for you?</h3>
+                  <div className="ac-option-grid ac-option-grid--compact">
+                    {modeOptions.map((option) => (
+                      <button type="button" key={option.value} className={`ac-option-card ${preferredMode === option.value ? 'is-selected' : ''}`} onClick={() => setPreferredMode(option.value)} aria-pressed={preferredMode === option.value}>
+                        <span className="ac-option-card__content"><strong>{option.title}</strong><small>{option.description}</small></span>
+                        <span className="ac-option-card__check" aria-hidden="true">{preferredMode === option.value ? '✓' : ''}</span>
+                      </button>
+                    ))}
+                  </div>
                   <fieldset className="ac-fieldset">
-                    <legend>Remote support accepted?</legend>
-                    <div className="ac-choice-row">
-                      <label><input type="radio" name="remote-accepted" checked={remoteAccepted === true} onChange={() => setRemoteAccepted(true)} /> Yes</label>
-                      <label><input type="radio" name="remote-accepted" checked={remoteAccepted === false} onChange={() => setRemoteAccepted(false)} /> No</label>
+                    <legend>If in-person support is not available, is remote support okay?</legend>
+                    <div className="ac-choice-cards ac-choice-cards--two">
+                      {([true, false] as const).map((value) => (
+                        <button type="button" key={String(value)} className={`ac-choice-card ${remoteAccepted === value ? 'is-selected' : ''}`} onClick={() => setRemoteAccepted(value)} aria-pressed={remoteAccepted === value}>
+                          <strong>{value ? 'Yes, remote is okay' : 'No, I need in-person support'}</strong>
+                        </button>
+                      ))}
                     </div>
                   </fieldset>
-                </>
-              )}
-
-              <fieldset className="ac-fieldset">
-                <legend>Will a companion be present?</legend>
-                <div className="ac-choice-row">
-                  <label><input type="radio" name="companion-present" checked={companionPresent === true} onChange={() => setCompanionPresent(true)} /> Yes</label>
-                  <label><input type="radio" name="companion-present" checked={companionPresent === false} onChange={() => setCompanionPresent(false)} /> No</label>
                 </div>
-              </fieldset>
+              )}
+            </div>
+          </Card>
+        )}
 
+        {step === 4 && (
+          <Card padding="large">
+            <div className="ac-appointment-request-page__section">
+              <span className="ac-section-kicker">STEP 4 OF 5</span>
+              <h2 className="title-large">Will someone accompany you?</h2>
+              <p className="body-medium ac-section-intro">This helps staff understand how communication support should be arranged.</p>
+              <div className="ac-choice-cards ac-choice-cards--two">
+                {([true, false] as const).map((value) => (
+                  <button type="button" key={String(value)} className={`ac-choice-card ${companionPresent === value ? 'is-selected' : ''}`} onClick={() => { setCompanionPresent(value); if (!value) setCompanionAssists(null); }} aria-pressed={companionPresent === value}>
+                    <strong>{value ? 'Yes, someone will accompany me' : 'No, I’ll be coming alone'}</strong>
+                  </button>
+                ))}
+              </div>
               {companionPresent && (
-                <fieldset className="ac-fieldset">
-                  <legend>Should the companion assist with communication?</legend>
-                  <div className="ac-choice-row">
-                    <label><input type="radio" name="companion-assists" checked={companionAssists === true} onChange={() => setCompanionAssists(true)} /> Yes</label>
-                    <label><input type="radio" name="companion-assists" checked={companionAssists === false} onChange={() => setCompanionAssists(false)} /> No</label>
+                <fieldset className="ac-fieldset ac-conditional-section">
+                  <legend>Would you like your companion to help with communication?</legend>
+                  <div className="ac-choice-cards ac-choice-cards--two">
+                    {([true, false] as const).map((value) => (
+                      <button type="button" key={String(value)} className={`ac-choice-card ${companionAssists === value ? 'is-selected' : ''}`} onClick={() => setCompanionAssists(value)} aria-pressed={companionAssists === value}>
+                        <strong>{value ? 'Yes, they can assist' : 'No, I prefer other support'}</strong>
+                      </button>
+                    ))}
                   </div>
                 </fieldset>
               )}
+              <label className="ac-field ac-conditional-section">
+                <span>Anything else you’d like the hospital staff to know? <em>Optional</em></span>
+                <textarea value={accessibilityNote} onChange={(event) => setAccessibilityNote(event.target.value)} placeholder="For example, please communicate with me directly and use visual alerts when calling me." rows={4} maxLength={500} />
+                <small>{accessibilityNote.length}/500</small>
+              </label>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
+
+        {step === 5 && (
+          <Card padding="large">
+            <div className="ac-appointment-request-page__section">
+              <span className="ac-section-kicker">STEP 5 OF 5</span>
+              <h2 className="title-large">Review your request</h2>
+              <p className="body-medium ac-section-intro">Please check the details before sending them to the hospital.</p>
+              <div className="ac-review-list">
+                <div><span>Department</span><strong>{selectedDepartment}</strong><button type="button" onClick={() => setStep(1)}>Edit</button></div>
+                <div><span>Reason for visit</span><strong>{reasonForVisit || '—'}</strong><button type="button" onClick={() => setStep(1)}>Edit</button></div>
+                <div><span>Communication</span><strong>{communicationLabel}</strong><button type="button" onClick={() => setStep(2)}>Edit</button></div>
+                <div><span>Interpreter</span><strong>{interpreterRequired ? `Yes · ${modeLabel} · ${remoteAccepted ? 'remote fallback accepted' : 'in-person only'}` : 'No'}</strong><button type="button" onClick={() => setStep(3)}>Edit</button></div>
+                <div><span>Companion</span><strong>{companionPresent ? `Yes · ${companionAssists ? 'assists with communication' : 'does not assist with communication'}` : 'No'}</strong><button type="button" onClick={() => setStep(4)}>Edit</button></div>
+                {accessibilityNote && <div><span>Note for staff</span><strong>{accessibilityNote}</strong><button type="button" onClick={() => setStep(4)}>Edit</button></div>}
+              </div>
+              <div className="ac-review-notice"><strong>What happens next?</strong><span>Your request will be marked <b>PENDING</b>. Hospital staff will review it and enter the actual appointment date, time and doctor.</span></div>
+            </div>
+          </Card>
+        )}
 
         {error && <div className="ac-appointment-request-page__error" role="alert">{error}</div>}
 
         <div className="ac-appointment-request-page__actions">
-          <Button type="button" variant="secondary" size="large" onClick={() => navigate('/patient')}>Cancel</Button>
-          <Button type="submit" variant="primary" size="large" disabled={!canSubmit}>{isSubmitting ? 'Submitting...' : 'Submit Request'}</Button>
+          <Button type="button" variant="secondary" size="large" onClick={() => step === 1 ? navigate('/patient') : setStep((current) => current - 1)}>{step === 1 ? 'Cancel' : 'Back'}</Button>
+          {step < 5 ? <Button type="button" variant="primary" size="large" onClick={goNext}>Continue</Button> : <Button type="submit" variant="primary" size="large" disabled={!canSubmit}>{isSubmitting ? 'Sending Request...' : 'Send Request to Hospital'}</Button>}
         </div>
       </form>
     </div>
