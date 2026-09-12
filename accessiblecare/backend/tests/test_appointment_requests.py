@@ -1,5 +1,5 @@
 import unittest
-from datetime import date, datetime, time
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
@@ -20,7 +20,7 @@ OTHER_DEPARTMENT_ID = UUID("77777777-7777-7777-7777-777777777777")
 REQUEST_ID = UUID("88888888-8888-8888-8888-888888888888")
 OTHER_REQUEST_ID = UUID("99999999-9999-9999-9999-999999999999")
 
-PATIENT = UserIdentity(id=PATIENT_USER_ID, role="PATIENT", full_name="Demo Patient")
+PATIENT = UserIdentity(id=PATIENT_USER_ID, role="PATIENT", full_name="Demo Patient", phone="+919999999999")
 STAFF = UserIdentity(id=STAFF_USER_ID, role="STAFF", full_name="Hospital Staff")
 
 
@@ -70,16 +70,14 @@ class FakeRpc:
     def execute(self):
         request_id = self.params["p_request_id"]
         staff_user_id = self.params["p_staff_user_id"]
-        if staff_user_id != STAFF_USER_ID:
-            raise Exception("Staff access required")
+        if staff_user_id != STAFF_USER_ID: raise Exception("Staff access required")
         request_rows = [row for row in self.db.get("appointment_requests", []) if row["id"] == request_id]
         if not request_rows: raise Exception("Appointment request not found")
         request = request_rows[0]
         if request["hospital_id"] != HOSPITAL_ID.__str__(): raise Exception("Appointment request not found")
         if request["status"] != "PENDING": raise Exception("Only pending requests can be confirmed")
         department_rows = [row for row in self.db.get("departments", []) if row["id"] == self.params["p_department_id"]]
-        if not department_rows or department_rows[0]["hospital_id"] != HOSPITAL_ID.__str__():
-            raise Exception("Department does not belong to staff hospital")
+        if not department_rows or department_rows[0]["hospital_id"] != HOSPITAL_ID.__str__(): raise Exception("Department does not belong to staff hospital")
         appointment = {
             "id": str(uuid4()), "hospital_id": HOSPITAL_ID.__str__(), "patient_id": request["patient_id"],
             "department_id": self.params["p_department_id"], "doctor_name": self.params["p_doctor_name"],
@@ -110,16 +108,14 @@ class AppointmentRequestTests(unittest.TestCase):
             ],
             "appointment_requests": [{
                 "id": str(REQUEST_ID), "patient_id": str(PATIENT_ID), "hospital_id": str(HOSPITAL_ID), "department_id": str(DEPARTMENT_ID),
-                "preferred_date": "2026-09-20", "preferred_time": "10:00:00", "preferred_time_window": None,
                 "communication_preference": "ISL", "interpreter_required": True, "preferred_interpreter_mode": "EITHER",
                 "remote_accepted": True, "companion_present": False, "companion_assists_communication": False,
                 "status": "PENDING", "appointment_id": None, "reviewed_by": None, "reviewed_at": None,
                 "created_at": "2026-09-10T10:00:00+00:00", "updated_at": "2026-09-10T10:00:00+00:00",
             }, {
                 "id": str(OTHER_REQUEST_ID), "patient_id": str(PATIENT_ID), "hospital_id": str(OTHER_HOSPITAL_ID), "department_id": str(OTHER_DEPARTMENT_ID),
-                "preferred_date": "2026-09-21", "preferred_time": "11:00:00", "preferred_time_window": None,
                 "communication_preference": "TEXT", "interpreter_required": False, "preferred_interpreter_mode": None,
-                "remote_accepted": True, "companion_present": False, "companion_assists_communication": False,
+                "remote_accepted": False, "companion_present": False, "companion_assists_communication": False,
                 "status": "PENDING", "appointment_id": None, "reviewed_by": None, "reviewed_at": None,
                 "created_at": "2026-09-10T11:00:00+00:00", "updated_at": "2026-09-10T11:00:00+00:00",
             }],
@@ -129,10 +125,11 @@ class AppointmentRequestTests(unittest.TestCase):
 
     def _create_payload(self):
         return AppointmentRequestCreate(
-            department_id=DEPARTMENT_ID, preferred_date=date(2026, 9, 20), preferred_time=time(10, 0),
+            department_id=DEPARTMENT_ID, reason_for_visit="Routine ENT consultation",
             communication_preference=CommunicationPreference.ISL, interpreter_required=True,
             preferred_interpreter_mode=InterpreterMode.EITHER, remote_accepted=True,
             companion_present=True, companion_assists_communication=True,
+            accessibility_note="Please use visual alerts when calling me.",
         )
 
     def test_patient_creates_pending_request_without_client_hospital_id(self):
@@ -140,6 +137,7 @@ class AppointmentRequestTests(unittest.TestCase):
         self.assertEqual(created["status"], "PENDING")
         self.assertEqual(created["patient_id"], str(PATIENT_ID))
         self.assertEqual(self.db["appointment_requests"][-1]["hospital_id"], str(HOSPITAL_ID))
+        self.assertEqual(self.db["appointment_requests"][-1]["reason_for_visit"], "Routine ENT consultation")
         self.assertTrue(self.db["appointment_requests"][-1]["companion_assists_communication"])
 
     def test_patient_cannot_read_another_patient_request(self):
@@ -186,9 +184,16 @@ class AppointmentRequestTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 409)
         self.assertEqual(len(self.db["appointments"]), 0)
 
-    def test_invalid_request_schema_requires_time_or_window(self):
-        with self.assertRaises(ValueError):
-            AppointmentRequestCreate(department_id=DEPARTMENT_ID, preferred_date=date(2026, 9, 20), communication_preference=CommunicationPreference.ISL)
+    def test_request_schema_does_not_require_patient_selected_time(self):
+        payload = AppointmentRequestCreate(
+            department_id=DEPARTMENT_ID,
+            reason_for_visit="General consultation",
+            communication_preference=CommunicationPreference.TEXT,
+        )
+        self.assertEqual(payload.department_id, DEPARTMENT_ID)
+        self.assertEqual(payload.reason_for_visit, "General consultation")
+        self.assertFalse(payload.interpreter_required)
+        self.assertFalse(payload.remote_accepted)
 
 
 if __name__ == "__main__":
