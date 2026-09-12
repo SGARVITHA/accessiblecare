@@ -1,124 +1,56 @@
-.ac-appointment-request-page {
-  max-width: 920px;
-  margin: 0 auto;
-  padding-bottom: var(--space-8);
-}
-
-.ac-appointment-request-page__form {
-  display: grid;
-  gap: var(--space-5);
-}
-
-.ac-appointment-request-page__section {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.ac-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-.ac-field,
-.ac-fieldset {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 0;
-  border: 0;
-  padding: 0;
-  margin: 0;
-}
-
-.ac-field > span,
-.ac-fieldset > legend {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--color-on-surface);
-}
-
-.ac-field input,
-.ac-field select {
-  width: 100%;
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--color-outline);
-  border-radius: 10px;
-  background: var(--color-surface);
-  color: var(--color-on-surface);
-  font: inherit;
-  box-sizing: border-box;
-}
-
-.ac-choice-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-  min-height: 44px;
-  align-items: center;
-}
-
-.ac-choice-row label {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-on-surface);
-}
-
-.ac-field-help {
-  margin: 0;
-  color: var(--color-on-surface-variant);
-  font-size: 0.875rem;
-}
-
-.ac-appointment-request-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-3);
-}
-
-.ac-appointment-request-page__error {
-  padding: var(--space-3) var(--space-4);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface));
-  color: var(--color-error);
-}
-
-.ac-appointment-request-page__success {
-  display: grid;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
-}
-
-.ac-appointment-request-page__success h1,
-.ac-appointment-request-page__success p {
-  margin: 0;
-}
-
-.ac-appointment-request-page__eyebrow {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--color-primary);
-}
-
-.ac-appointment-request-page__loading {
-  padding: var(--space-8) 0;
-  text-align: center;
-  color: var(--color-on-surface-variant);
-}
-
+.ac-appointment-request-page { max-width: 920px; margin: 0 auto; padding-bottom: var(--space-8); }
+.ac-appointment-request-page__form { display: grid; gap: var(--space-5); }
+.ac-appointment-request-page__section { display: grid; gap: var(--space-4); }
+.ac-section-kicker, .ac-appointment-request-page__eyebrow { font-size: .78rem; font-weight: 750; letter-spacing: .08em; color: var(--color-primary); }
+.ac-section-intro { margin: 0; color: var(--color-on-surface-variant); max-width: 720px; }
+.ac-request-progress { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin: 0 0 var(--space-5); }
+.ac-request-progress__item { display: grid; gap: 6px; justify-items: center; color: var(--color-on-surface-variant); font-size: .75rem; }
+.ac-request-progress__item span { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--color-outline); background: var(--color-surface); font-weight: 700; }
+.ac-request-progress__item.is-active { color: var(--color-primary); font-weight: 650; }
+.ac-request-progress__item.is-active span { border-color: var(--color-primary); background: var(--color-primary); color: white; }
+.ac-field, .ac-fieldset { display: grid; gap: var(--space-2); min-width: 0; border: 0; padding: 0; margin: 0; }
+.ac-field > span, .ac-fieldset > legend { font-size: .92rem; font-weight: 650; color: var(--color-on-surface); }
+.ac-field input, .ac-field select, .ac-field textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--color-outline); border-radius: 12px; background: var(--color-surface); color: var(--color-on-surface); font: inherit; box-sizing: border-box; }
+.ac-field input, .ac-field select { min-height: 48px; }
+.ac-field textarea { resize: vertical; min-height: 108px; }
+.ac-field input:focus, .ac-field select:focus, .ac-field textarea:focus, .ac-option-card:focus-visible, .ac-choice-card:focus-visible, .ac-review-list button:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent); outline-offset: 2px; }
+.ac-field small { color: var(--color-on-surface-variant); font-size: .82rem; line-height: 1.45; }
+.ac-option-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+.ac-option-grid--compact { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.ac-option-card, .ac-choice-card { position: relative; text-align: left; display: flex; align-items: flex-start; gap: 12px; min-height: 104px; padding: 18px; border: 1px solid var(--color-outline); border-radius: 14px; background: var(--color-surface); color: var(--color-on-surface); font: inherit; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+.ac-option-card:hover, .ac-choice-card:hover { transform: translateY(-1px); }
+.ac-option-card.is-selected, .ac-choice-card.is-selected { border: 2px solid var(--color-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent); padding: 17px; }
+.ac-option-card__icon { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 11px; background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)); color: var(--color-primary); font-weight: 750; font-size: .78rem; }
+.ac-option-card__content { display: grid; gap: 5px; }
+.ac-option-card__content strong, .ac-choice-card strong { font-size: .96rem; line-height: 1.3; }
+.ac-option-card__content small, .ac-choice-card small { color: var(--color-on-surface-variant); line-height: 1.45; }
+.ac-option-card__check { margin-left: auto; min-width: 20px; color: var(--color-primary); font-weight: 800; }
+.ac-choice-cards { display: grid; gap: 12px; }
+.ac-choice-cards--two { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.ac-choice-card { min-height: 78px; justify-content: flex-start; align-items: center; }
+.ac-conditional-section { display: grid; gap: var(--space-3); padding-top: var(--space-2); }
+.ac-conditional-section h3 { margin: 0; }
+.ac-review-list { display: grid; border: 1px solid var(--color-outline); border-radius: 14px; overflow: hidden; }
+.ac-review-list > div { display: grid; grid-template-columns: 150px 1fr auto; gap: 14px; align-items: start; padding: 15px 16px; border-bottom: 1px solid var(--color-outline); }
+.ac-review-list > div:last-child { border-bottom: 0; }
+.ac-review-list span { color: var(--color-on-surface-variant); font-size: .85rem; }
+.ac-review-list strong { font-weight: 600; overflow-wrap: anywhere; }
+.ac-review-list button { border: 0; background: transparent; color: var(--color-primary); font: inherit; font-weight: 650; cursor: pointer; padding: 2px 0; }
+.ac-review-notice, .ac-pending-banner { display: grid; gap: 5px; padding: 16px; border-radius: 12px; background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)); border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-outline)); color: var(--color-on-surface); }
+.ac-review-notice span, .ac-pending-banner span { color: var(--color-on-surface-variant); line-height: 1.5; }
+.ac-appointment-request-page__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); }
+.ac-appointment-request-page__error { padding: var(--space-3) var(--space-4); border-radius: 10px; background: color-mix(in srgb, var(--color-error) 10%, var(--color-surface)); color: var(--color-error); }
+.ac-appointment-request-page__success { display: grid; gap: var(--space-4); margin-top: var(--space-6); }
+.ac-appointment-request-page__success h1, .ac-appointment-request-page__success p { margin: 0; }
+.ac-status-icon { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface)); color: var(--color-primary); font-size: 1.5rem; font-weight: 800; }
+.ac-appointment-request-page__loading { padding: var(--space-8) 0; text-align: center; color: var(--color-on-surface-variant); }
 @media (max-width: 700px) {
-  .ac-form-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .ac-appointment-request-page__actions {
-    justify-content: stretch;
-  }
-
-  .ac-appointment-request-page__actions button {
-    flex: 1;
-  }
+  .ac-option-grid, .ac-option-grid--compact, .ac-choice-cards--two { grid-template-columns: 1fr; }
+  .ac-request-progress { gap: 3px; }
+  .ac-request-progress__item small { font-size: .65rem; }
+  .ac-review-list > div { grid-template-columns: 1fr auto; }
+  .ac-review-list > div strong { grid-column: 1 / -1; grid-row: 2; }
+  .ac-review-list > div button { grid-column: 2; grid-row: 1; }
+  .ac-appointment-request-page__actions { justify-content: stretch; }
+  .ac-appointment-request-page__actions button { flex: 1; }
 }
