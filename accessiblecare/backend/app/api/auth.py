@@ -1,5 +1,7 @@
 """Authentication verification and patient profile endpoints."""
 
+from datetime import datetime, timezone
+
 from pydantic import BaseModel, field_validator
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -40,7 +42,7 @@ async def update_my_profile(
     payload: ProfileUpdateRequest,
     current_user: UserIdentity = Depends(get_current_user),
 ):
-    """Update the authenticated user's own contact profile.
+    """Update the authenticated patient's own contact profile.
 
     The user id is always taken from the verified JWT identity; it is never
     accepted from the client payload.
@@ -58,7 +60,7 @@ async def update_my_profile(
             .update({
                 "full_name": payload.full_name,
                 "phone": payload.phone,
-                "updated_at": "now()",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
             })
             .eq("id", current_user.id)
             .eq("role", "PATIENT")
