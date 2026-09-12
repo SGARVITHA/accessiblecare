@@ -1,8 +1,20 @@
 import os
 from functools import lru_cache
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+from uuid import UUID
 from pydantic import BaseModel, Field
+
+
+def _optional_uuid_from_env(name: str) -> Optional[UUID]:
+    """Read an optional UUID environment variable without treating blank as a value."""
+    value = os.getenv(name, "").strip()
+    if not value:
+        return None
+    try:
+        return UUID(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a valid UUID") from exc
 
 
 def _load_env_files() -> None:
@@ -68,6 +80,13 @@ class Settings(BaseModel):
             ).split(",")
             if origin.strip()
         ]
+    )
+
+    # Hospital deployment context (Backend only)
+    # Used when a patient is not yet associated with a hospital in patient_profiles.
+    # This is configured per hospital deployment; the client never supplies hospital_id.
+    ACCESSIBLECARE_HOSPITAL_ID: Optional[UUID] = Field(
+        default_factory=lambda: _optional_uuid_from_env("ACCESSIBLECARE_HOSPITAL_ID")
     )
 
     # Supabase (Backend only)

@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import HTTPException
 
 from app.core.auth import UserIdentity
+from app.core.config import get_settings
 from app.core.supabase import get_supabase_client
 from app.schemas.appointment_requests import AppointmentRequestConfirm, AppointmentRequestCreate, AppointmentRequestReject
 
@@ -14,6 +15,7 @@ from app.schemas.appointment_requests import AppointmentRequestConfirm, Appointm
 class AppointmentRequestService:
     def __init__(self, supabase: Any | None = None) -> None:
         self.supabase = supabase or get_supabase_client()
+        self.settings = get_settings()
 
     def _patient_id(self, current_user: UserIdentity) -> UUID:
         if current_user.role != "PATIENT":
@@ -27,15 +29,27 @@ class AppointmentRequestService:
         return UUID(str(rows[0]["id"]))
 
     def _patient_hospital_id(self, current_user: UserIdentity) -> UUID:
+        """Resolve hospital context without accepting a client-supplied hospital ID.
+
+        Existing patient-to-hospital associations remain authoritative. For a newly
+        registered patient arriving at a hospital, the backend deployment context is
+        used instead. The frontend never chooses or submits hospital_id.
+        """
         if current_user.role != "PATIENT":
             raise HTTPException(status_code=403, detail="Patient access required")
         try:
             rows = self.supabase.table("patient_profiles").select("hospital_id").eq("user_id", current_user.id).limit(1).execute().data
         except Exception:
             raise HTTPException(status_code=503, detail="Unable to verify patient hospital")
-        if not rows or not rows[0].get("hospital_id"):
-            raise HTTPException(status_code=400, detail="Hospital context is not configured for this visit")
-        return UUID(str(rows[0]["hospital_id"]))
+
+        if rows and rows[0].get("hospital_id"):
+            return UUID(str(rows[0]["hospital_id"]))
+
+        configured_hospital = self.settings.ACCESSIBLECARE_HOSPITAL_ID
+        if configured_hospital is not None:
+            return configured_hospital
+
+        raise HTTPException(status_code=400, detail="Hospital context is not configured for this visit")
 
     def _staff_hospital_id(self, current_user: UserIdentity) -> UUID:
         if current_user.role != "STAFF":
