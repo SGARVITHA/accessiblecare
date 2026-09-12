@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import PatientLayout from './layouts/PatientLayout';
 import StaffLayout from './layouts/StaffLayout';
 import InterpreterLayout from './layouts/InterpreterLayout';
@@ -44,6 +45,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route index element={<RootRedirect />} />
           <Route path="/patient" element={<ProtectedRoute allowedRoles={['PATIENT']}><PatientLayout /></ProtectedRoute>}>
             <Route index element={<PatientDashboard />} />
