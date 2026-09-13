@@ -141,7 +141,11 @@ class AppointmentRequestService:
             raise HTTPException(status_code=503, detail="Unable to submit accessible visit request")
         if not result.data:
             raise HTTPException(status_code=503, detail="Accessible visit request could not be created")
-        return self._response(result.data[0])
+
+        # Re-read through the same ownership-scoped query used elsewhere so the
+        # response contains authoritative patient, hospital, and department names.
+        created_id = UUID(str(result.data[0]["id"]))
+        return self.get_patient_request(current_user, created_id)
 
     def list_patient_requests(self, current_user: UserIdentity) -> list[dict[str, Any]]:
         patient_id = self._patient_id(current_user)
