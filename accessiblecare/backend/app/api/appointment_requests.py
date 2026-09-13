@@ -4,12 +4,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, status
 from app.core.auth import UserIdentity, get_current_user
 from app.schemas.appointment_requests import AppointmentRequestConfirm, AppointmentRequestCreate, AppointmentRequestReject, AppointmentRequestResponse
+from app.schemas.patient_workflow import AppointmentResponse
 from app.services.appointment_requests import AppointmentRequestService
+from app.services.staff_appointments import StaffAppointmentService
 
 router = APIRouter(prefix="/api", tags=["appointment-requests"])
 
 def get_service() -> AppointmentRequestService:
     return AppointmentRequestService()
+
+def get_staff_appointment_service() -> StaffAppointmentService:
+    return StaffAppointmentService()
 
 @router.get("/patients/me/departments")
 async def list_my_departments(current_user: UserIdentity = Depends(get_current_user), service: AppointmentRequestService = Depends(get_service)):
@@ -42,3 +47,11 @@ async def confirm_appointment_request(request_id: UUID, payload: AppointmentRequ
 @router.post("/staff/appointment-requests/{request_id}/reject", response_model=AppointmentRequestResponse)
 async def reject_appointment_request(request_id: UUID, payload: AppointmentRequestReject, current_user: UserIdentity = Depends(get_current_user), service: AppointmentRequestService = Depends(get_service)):
     return service.reject(current_user, request_id, payload)
+
+@router.get("/staff/appointments/{appointment_id}", response_model=AppointmentResponse)
+async def get_staff_appointment(
+    appointment_id: UUID,
+    current_user: UserIdentity = Depends(get_current_user),
+    service: StaffAppointmentService = Depends(get_staff_appointment_service),
+):
+    return service.get(current_user, appointment_id)
