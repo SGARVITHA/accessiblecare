@@ -29,6 +29,8 @@ Rules:
 - The request group strategy is `PARALLEL_TOP_N`.
 - Individual requests begin as `response_status=PENDING` and `assignment_status=UNASSIGNED`.
 - No interpreter is assigned by this endpoint.
+- If an existing group for the visit is `PENDING` or `ACTIVE`, that active group is reused.
+- An existing `OPEN` group is not reused; starting coordination after `OPEN` creates a new request group for a new coordination cycle.
 - No AI ranking, notification, fallback, escalation, Realtime, RAG, LangGraph, Gemini, or video behavior is performed here.
 
 ### Interpreter response
@@ -96,6 +98,32 @@ assigned interpreter may cancel
     ↓
 request: CANCELLED
 request group: OPEN
+    ↓
+B4 starts another coordination attempt
+    ↓
+new request group: PENDING
+```
+
+### Coordination-cycle semantics
+
+One `interpreter_request_groups` row represents one interpreter-coordination cycle for an accessibility visit.
+
+- `PENDING` and `ACTIVE` represent an in-progress cycle and are eligible for duplicate-request reuse.
+- `CONFIRMED` represents a cycle with a human-approved assignment.
+- `OPEN` represents a previously confirmed cycle that has been reopened after assignment cancellation. It is not reused for a later coordination attempt.
+- A later B4 invocation after `OPEN` creates a new request group. Previous requests and their outcomes remain attached to the earlier group for audit/history.
+
+Example:
+
+```text
+Cycle 1 / Group G1
+ ├── Anitha → ASSIGNED → CANCELLED
+ ├── Priya  → NOT_SELECTED
+ └── G1     → OPEN
+
+Cycle 2 / Group G2
+ ├── newly selected eligible requests
+ └── G2     → PENDING
 ```
 
 `REQUEST` and `ASSIGNMENT` are deliberately separate concepts. There is no `assigned_interpreter_id` column on `accessibility_visits`.
