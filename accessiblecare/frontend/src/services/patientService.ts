@@ -1,6 +1,5 @@
 import { api } from '../lib/api';
-import type { Patient, Appointment, AccessibilityProfile, AccessibilityVisit, AccessibilityStatus, InterpreterStatus, QuickMessage, PatientDashboardSummary, PatientNotification, CommunicationPreference, InterpreterMode, AppointmentRequest, AppointmentRequestCreate, AppointmentRequestDepartment } from '../types/patient';
-
+import type { Patient, Appointment, AccessibilityProfile, AccessibilityVisit, AccessibilityStatus, InterpreterStatus, QuickMessage, PatientDashboardSummary, CommunicationPreference, InterpreterMode, AppointmentRequest, AppointmentRequestCreate, AppointmentRequestDepartment } from '../types/patient';
 interface ApiAppointment { id: string; external_id?: string | null; department?: string | null; hospital?: string | null; hospital_location?: string | null; doctor_name?: string | null; appointment_time: string; status: string; source: string; }
 interface ApiAccessibilityProfile { id: string; patient_id: string; communication_preference: CommunicationPreference; interpreter_required: boolean; preferred_interpreter_mode?: InterpreterMode | null; remote_accepted: boolean; companion_preference?: string | null; }
 interface ApiAccessibilityStatus { configured: boolean; status: AccessibilityStatus['status']; visit: AccessibilityVisit | null; }
