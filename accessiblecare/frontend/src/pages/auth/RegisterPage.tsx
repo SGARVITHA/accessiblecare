@@ -14,25 +14,57 @@ export default function RegisterPage() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setErrorMsg(null); setMessage(null);
-    if (password.length < 6) { setErrorMsg('Password must be at least 6 characters.'); return; }
-    if (password !== confirmPassword) { setErrorMsg('Passwords do not match.'); return; }
+    setErrorMsg(null);
+    setMessage(null);
+
+    const trimmedName = fullName.trim();
+    const trimmedPhone = phone.trim();
+
+    if (!trimmedName) {
+      setErrorMsg('Please enter your full name.');
+      return;
+    }
+    if (!trimmedPhone) {
+      setErrorMsg('Please enter your phone number.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        phone: phone.trim(),
+        phone: trimmedPhone,
         password,
-        options: { data: { full_name: fullName.trim() } },
+        options: {
+          data: {
+            full_name: trimmedName,
+            accessiblecare_role: 'PATIENT',
+          },
+        },
       });
-      if (error) { setErrorMsg(error.message); return; }
+
+      if (error) {
+        setErrorMsg(error.message);
+        return;
+      }
+
       if (data.session) {
         navigate('/patient', { replace: true });
       } else {
-        setMessage('Account created. Please complete the phone verification step if the hospital authentication settings require it, then sign in.');
+        setMessage('Account created. Complete phone verification if required, then sign in with your phone number and password.');
       }
     } catch (error) {
       setErrorMsg(error instanceof Error ? error.message : 'Registration failed.');
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -46,7 +78,7 @@ export default function RegisterPage() {
         {errorMsg && <div role="alert" style={{ padding: '.75rem', marginBottom: '1rem', borderRadius: 8, background: '#fff1f2', border: '1px solid #fecdd3', color: '#9f1239' }}>{errorMsg}</div>}
         {message && <div role="status" style={{ padding: '.75rem', marginBottom: '1rem', borderRadius: 8, background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46' }}>{message}</div>}
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-          <label style={{ display: 'grid', gap: '.35rem' }}><span>Full name</span><input value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Your name" /></label>
+          <label style={{ display: 'grid', gap: '.35rem' }}><span>Full name</span><input value={fullName} onChange={(e) => setFullName(e.target.value)} required placeholder="Your name" autoComplete="name" /></label>
           <label style={{ display: 'grid', gap: '.35rem' }}><span>Phone number</span><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+91 98765 43210" autoComplete="tel" /></label>
           <label style={{ display: 'grid', gap: '.35rem' }}><span>Password</span><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" /></label>
           <label style={{ display: 'grid', gap: '.35rem' }}><span>Confirm password</span><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} autoComplete="new-password" /></label>
