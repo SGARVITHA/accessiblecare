@@ -23,7 +23,7 @@ export const NextStepCard: React.FC<NextStepCardProps> = ({ appointment }) => {
         </div>
         <div className="ac-next-step-card__actions">
           <Button variant="secondary" size="large" onClick={() => navigate('/patient/appointments')}>I already have an appointment</Button>
-          <Button variant="primary" size="large" onClick={() => navigate('/patient/appointment-request')}>I need to book an appointment</Button>
+          <Button variant="primary" size="large" onClick={() => navigate('/patient/appointment-request')}>I need to request a visit</Button>
         </div>
       </section>
     );
