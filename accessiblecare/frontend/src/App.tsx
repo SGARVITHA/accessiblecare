@@ -17,7 +17,7 @@ import AppointmentRequestPage from './pages/patient/AppointmentRequestPage';
 import AppointmentRequestsPage from './pages/patient/AppointmentRequestsPage';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffAppointmentsPage from './pages/staff/StaffAppointmentsPage';
-import StaffAppointmentWorkspacePage from './pages/staff/StaffAppointmentWorkspacePage';
+import StaffAppointmentRoutePage from './pages/staff/StaffAppointmentRoutePage';
 import StaffAppointmentRequestsPage from './pages/staff/StaffAppointmentRequestsPage';
 import StaffAppointmentRequestDetailPage from './pages/staff/StaffAppointmentRequestDetailPage';
 import StaffEscalationsPage from './pages/staff/StaffEscalationsPage';
@@ -60,7 +60,7 @@ function App() {
           <Route path="/staff" element={<ProtectedRoute allowedRoles={['STAFF']}><StaffLayout /></ProtectedRoute>}>
             <Route index element={<StaffDashboard />} />
             <Route path="appointments" element={<StaffAppointmentsPage />} />
-            <Route path="appointments/:id" element={<StaffAppointmentWorkspacePage />} />
+            <Route path="appointments/:id" element={<StaffAppointmentRoutePage />} />
             <Route path="appointment-requests" element={<StaffAppointmentRequestsPage />} />
             <Route path="appointment-requests/:id" element={<StaffAppointmentRequestDetailPage />} />
             <Route path="escalations" element={<StaffEscalationsPage />} />
