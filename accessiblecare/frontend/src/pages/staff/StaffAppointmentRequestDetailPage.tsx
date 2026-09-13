@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -40,11 +41,11 @@ export default function StaffAppointmentRequestDetailPage() {
     setIsSubmitting(true);
     setError(null);
     try {
-      const result = await staffAppointmentRequestService.confirm(id, {
+      await staffAppointmentRequestService.confirm(id, {
         appointment_time: new Date(appointmentTime).toISOString(),
         doctor_name: doctorName.trim() || null,
       });
-      navigate(`/staff/appointments/${encodeURIComponent(result.appointment_id)}`);
+      loadRequest();
     } catch (confirmError) {
       setError(confirmError instanceof Error ? confirmError.message : 'Unable to confirm the appointment.');
       setIsSubmitting(false);
