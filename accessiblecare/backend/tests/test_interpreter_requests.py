@@ -11,6 +11,7 @@ STAFF_USER_ID = "11111111-1111-1111-1111-111111111111"
 STAFF_HOSPITAL_ID = "22222222-2222-2222-2222-222222222222"
 VISIT_ID = UUID("33333333-3333-3333-3333-333333333333")
 GROUP_ID = "44444444-4444-4444-4444-444444444444"
+SECOND_GROUP_ID = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 REQUEST_ID = "55555555-5555-5555-5555-555555555555"
 INTERPRETER_ID = "66666666-6666-6666-6666-666666666666"
 
@@ -80,7 +81,7 @@ class FakeQuery:
             for payload in payload_rows:
                 row = dict(payload)
                 if self.table == "interpreter_request_groups":
-                    row.setdefault("id", GROUP_ID)
+                    row.setdefault("id", SECOND_GROUP_ID if rows else GROUP_ID)
                 elif self.table == "interpreter_requests":
                     row.setdefault("id", REQUEST_ID)
                 rows.append(row)
@@ -200,6 +201,27 @@ class InterpreterRequestServiceTests(unittest.TestCase):
         self.assertEqual(result.request_group_id, GROUP_ID)
         self.assertEqual(len(self.db["interpreter_request_groups"]), 1)
         self.assertEqual(len(self.db["interpreter_requests"]), 1)
+
+    def test_open_group_starts_new_coordination_cycle(self):
+        self.db["interpreter_request_groups"] = [
+            {
+                "id": GROUP_ID,
+                "accessibility_visit_id": str(VISIT_ID),
+                "requested_mode": "IN_PERSON",
+                "strategy": "PARALLEL_TOP_N",
+                "candidate_limit": 5,
+                "status": "OPEN",
+            }
+        ]
+
+        result = self.service.create_request_group_for_staff(STAFF, VISIT_ID)
+
+        self.assertEqual(result.status, "PENDING")
+        self.assertEqual(result.request_group_id, SECOND_GROUP_ID)
+        self.assertEqual(len(self.db["interpreter_request_groups"]), 2)
+        self.assertEqual(self.db["interpreter_request_groups"][0]["status"], "OPEN")
+        self.assertEqual(len(self.db["interpreter_requests"]), 1)
+        self.assertEqual(self.db["interpreter_requests"][0]["request_group_id"], SECOND_GROUP_ID)
 
     def test_candidate_limit_is_bounded(self):
         with self.assertRaises(HTTPException) as ctx:
