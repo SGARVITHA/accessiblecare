@@ -21,16 +21,19 @@ DECLARE
     v_hospital_id UUID;
     v_appointment public.appointments%ROWTYPE;
 BEGIN
-    -- The staff identity must come from the authenticated Supabase session.
-    -- This prevents a client from supplying another staff user's UUID.
-    IF auth.uid() IS NULL OR p_staff_user_id <> auth.uid() THEN
-        RAISE EXCEPTION 'Authenticated staff identity mismatch' USING ERRCODE = '42501';
+    -- This RPC is service-role-only. The FastAPI layer authenticates the
+    -- end-user and verifies STAFF role before invoking it. Therefore the
+    -- trusted backend passes the already-authenticated staff user ID here.
+    -- auth.uid() is intentionally not used because the service-role client
+    -- does not carry the end-user JWT context.
+    IF p_staff_user_id IS NULL THEN
+        RAISE EXCEPTION 'Staff identity is required' USING ERRCODE = '42501';
     END IF;
 
     IF NOT EXISTS (
         SELECT 1
         FROM public.profiles
-        WHERE id = auth.uid()
+        WHERE id = p_staff_user_id
           AND role = 'STAFF'
     ) THEN
         RAISE EXCEPTION 'Staff access required' USING ERRCODE = '42501';
@@ -39,7 +42,7 @@ BEGIN
     SELECT hospital_id
     INTO v_hospital_id
     FROM public.staff_profiles
-    WHERE user_id = auth.uid()
+    WHERE user_id = p_staff_user_id
       AND is_active = true
     LIMIT 1;
 
@@ -94,7 +97,7 @@ BEGIN
     UPDATE public.appointment_requests
     SET status = 'CONFIRMED',
         appointment_id = v_appointment.id,
-        reviewed_by = auth.uid(),
+        reviewed_by = p_staff_user_id,
         reviewed_at = now(),
         updated_at = now()
     WHERE id = v_request.id;
@@ -107,8 +110,8 @@ BEGIN
 END;
 $$;
 
--- This RPC is intentionally backend-only. The FastAPI service-role client
--- remains the only application caller.
+-- Backend-only RPC. The FastAPI service-role client is the only application
+-- caller; authenticated clients cannot execute this function directly.
 REVOKE ALL ON FUNCTION public.confirm_appointment_request(UUID, UUID, TIMESTAMPTZ, TEXT, UUID) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.confirm_appointment_request(UUID, UUID, TIMESTAMPTZ, TEXT, UUID) FROM authenticated;
 GRANT EXECUTE ON FUNCTION public.confirm_appointment_request(UUID, UUID, TIMESTAMPTZ, TEXT, UUID) TO service_role;
