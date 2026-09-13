@@ -5,7 +5,7 @@ interpreters with AI and does not assign an interpreter.
 """
 
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from typing import Literal
 
 
@@ -41,12 +41,6 @@ def _normalise(value: str | None) -> str:
     return (value or "").strip().upper()
 
 
-def _time_window(start: datetime, end: datetime) -> tuple[datetime, datetime]:
-    if end <= start:
-        raise ValueError("Appointment end must be after appointment start")
-    return start, end
-
-
 def _overlaps(
     appointment_start: datetime,
     appointment_end: datetime,
@@ -71,7 +65,6 @@ def _compatible_modes(
 
     if mode not in {"IN_PERSON", "REMOTE"}:
         return False, False, None
-
     if mode == "REMOTE" and not remote_accepted:
         return False, False, None
 
@@ -83,9 +76,11 @@ def _compatible_modes(
         return False, False, None
 
     if preferred == "REMOTE":
-        return (mode == "REMOTE" and remote_accepted), False, mode if mode == "REMOTE" and remote_accepted else None
+        if mode == "REMOTE" and remote_accepted:
+            return True, True, mode
+        return False, False, None
 
-    if preferred == "EITHER" or not preferred:
+    if preferred in {"EITHER", ""}:
         return True, False, mode
 
     return False, False, None
@@ -112,8 +107,8 @@ def evaluate_candidate(
         reasons.append("INTERPRETER_NOT_VERIFIED")
     if required not in {_normalise(value) for value in candidate.capabilities}:
         reasons.append("CAPABILITY_NOT_SUPPORTED")
-    if candidate.availability_date != appointment_start.date():
-        reasons.append("NO_DATE_OVERLAP")
+    if candidate.availability_status != "AVAILABLE":
+        reasons.append("AVAILABILITY_NOT_AVAILABLE")
     elif not _overlaps(
         appointment_start,
         appointment_end,
@@ -123,11 +118,11 @@ def evaluate_candidate(
     ):
         reasons.append("NO_TIME_OVERLAP")
     else:
-        try:
-            _, _, matched_mode = _compatible_modes(preferred_mode, remote_accepted, candidate.availability_mode)
-            compatible, preferred, matched_mode = _compatible_modes(preferred_mode, remote_accepted, candidate.availability_mode)
-        except Exception:
-            compatible, preferred, matched_mode = False, False, None
+        compatible, preferred, matched_mode = _compatible_modes(
+            preferred_mode,
+            remote_accepted,
+            candidate.availability_mode,
+        )
         if not compatible:
             reasons.append("MODE_INCOMPATIBLE")
         elif preferred:
@@ -169,7 +164,9 @@ def evaluate_candidates(
     remote_accepted: bool,
 ) -> list[EligibilityResult]:
     """Evaluate all candidates without performing ranking or assignment."""
-    _time_window(appointment_start, appointment_end)
+    if appointment_end <= appointment_start:
+        raise ValueError("Appointment end must be after appointment start")
+
     results = [
         evaluate_candidate(
             candidate,
@@ -182,4 +179,11 @@ def evaluate_candidates(
         )
         for candidate in candidates
     ]
-    return sorted(results, key=lambda result: (not result.eligible, result.classification != "PREFERRED", result.display_name))
+    return sorted(
+        results,
+        key=lambda result: (
+            not result.eligible,
+            result.classification != "PREFERRED",
+            result.display_name,
+        ),
+    )
