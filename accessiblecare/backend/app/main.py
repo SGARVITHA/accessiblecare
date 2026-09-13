@@ -4,6 +4,7 @@ from app.api.auth import router as auth_router
 from app.api.patient_workflow import router as patient_workflow_router
 from app.api.appointment_requests import router as appointment_requests_router
 from app.api.interpreter_requests import router as interpreter_requests_router
+from app.api.interpreter_cancellation import router as interpreter_cancellation_router
 from app.core.config import settings
 from app.core.supabase import get_supabase_client
 
@@ -24,6 +25,7 @@ app.include_router(auth_router)
 app.include_router(patient_workflow_router)
 app.include_router(appointment_requests_router)
 app.include_router(interpreter_requests_router)
+app.include_router(interpreter_cancellation_router)
 
 
 @app.get("/health")
