@@ -1,5 +1,6 @@
 """Interpreter response workflow for Phase 4 B5."""
 
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -57,10 +58,11 @@ class InterpreterResponseService:
         if rows[0].get("response_status") != "PENDING":
             raise HTTPException(status_code=409, detail="Interpreter request is no longer pending")
 
+        responded_at = datetime.now(timezone.utc).isoformat()
         try:
             result = (
                 self.supabase.table("interpreter_requests")
-                .update({"response_status": response_status, "responded_at": "now()"})
+                .update({"response_status": response_status, "responded_at": responded_at})
                 .eq("id", str(request_id))
                 .eq("interpreter_id", interpreter_id)
                 .eq("response_status", "PENDING")
