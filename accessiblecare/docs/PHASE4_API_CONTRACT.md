@@ -29,6 +29,8 @@ Rules:
 - The request group strategy is `PARALLEL_TOP_N`.
 - Individual requests begin as `response_status=PENDING` and `assignment_status=UNASSIGNED`.
 - No interpreter is assigned by this endpoint.
+- Active-group detection and creation of the group plus its request rows are performed atomically by the backend database function `create_interpreter_request_group`.
+- The accessibility visit row is locked during the transaction so concurrent staff requests cannot create two active groups for the same visit.
 - If an existing group for the visit is `PENDING` or `ACTIVE`, that active group is reused.
 - An existing `OPEN` group is not reused; starting coordination after `OPEN` creates a new request group for a new coordination cycle.
 - No AI ranking, notification, fallback, escalation, Realtime, RAG, LangGraph, Gemini, or video behavior is performed here.
@@ -44,6 +46,7 @@ Rules:
 - The backend resolves the interpreter profile from the authenticated user.
 - The request must belong to that interpreter.
 - Only `response_status=PENDING` may transition to `ACCEPTED` or `DECLINED`.
+- `responded_at` is written as an actual UTC timestamp.
 - Responding does not assign the interpreter.
 
 ### Staff assignment
@@ -58,6 +61,7 @@ Rules:
 - Other requests in the same group become `NOT_SELECTED`.
 - The request group becomes `CONFIRMED`.
 - Assignment history remains on `interpreter_requests`.
+- The state transition is performed atomically by `assign_interpreter_request`.
 
 ### Interpreter cancellation
 
@@ -72,6 +76,7 @@ Rules:
 - If the group is `CONFIRMED`, it reopens to `OPEN`.
 - No automatic reassignment is performed.
 - An audit-log entry is created with action `INTERPRETER_ASSIGNMENT_CANCELLED`.
+- The state transition and audit write are performed atomically by `cancel_interpreter_assignment`.
 - No fallback, notification, Realtime, event-outbox, escalation, AI, RAG, LangGraph, Gemini, or video behavior is performed here.
 
 ## Phase 4 state model
@@ -148,4 +153,6 @@ Those remain outside the Phase 4 implementation boundary.
 
 Repository-level implementation and static contract checks are complete. Runtime Supabase/FastAPI end-to-end execution remains environment-dependent and is not claimed as passed without a live configured runtime.
 
-The dedicated deterministic eligibility and request-initiation tests are included under `accessiblecare/backend/tests/`.
+The dedicated deterministic eligibility, request-initiation, assignment, and cancellation service tests are included under `accessiblecare/backend/tests/`.
+
+The B4/B6/B7 database functions are transaction boundaries; their row-locking behavior still requires execution against the configured Supabase/Postgres runtime for runtime verification.
