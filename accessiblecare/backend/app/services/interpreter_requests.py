@@ -11,9 +11,9 @@ from uuid import UUID
 
 from fastapi import HTTPException
 
+from app.core.auth import UserIdentity
 from app.core.supabase import get_supabase_client
 from app.services.interpreter_eligibility_service import (
-    APPOINTMENT_WINDOW_MINUTES,
     EligibilityResult,
     InterpreterEligibilityService,
 )
@@ -53,6 +53,21 @@ class InterpreterRequestService:
     ) -> None:
         self.supabase = supabase or get_supabase_client()
         self.eligibility_service = eligibility_service or InterpreterEligibilityService(self.supabase)
+
+    def create_request_group_for_staff(
+        self,
+        current_user: UserIdentity,
+        accessibility_visit_id: UUID,
+        *,
+        candidate_limit: int = DEFAULT_CANDIDATE_LIMIT,
+    ) -> InterpreterRequestGroupResult:
+        """Start interpreter coordination for a staff member's hospital-scoped visit."""
+        hospital_id = self._staff_hospital_id(current_user)
+        self._verify_visit_hospital(accessibility_visit_id, hospital_id)
+        return self.create_request_group(
+            accessibility_visit_id,
+            candidate_limit=candidate_limit,
+        )
 
     def create_request_group(
         self,
@@ -143,6 +158,43 @@ class InterpreterRequestService:
             raise HTTPException(status_code=503, detail="Interpreter requests could not be created")
 
         return self._load_group(group_id)
+
+    def _staff_hospital_id(self, current_user: UserIdentity) -> UUID:
+        if current_user.role != "STAFF":
+            raise HTTPException(status_code=403, detail="Staff access required")
+        try:
+            rows = (
+                self.supabase.table("staff_profiles")
+                .select("hospital_id")
+                .eq("user_id", current_user.id)
+                .eq("is_active", True)
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Unable to verify staff profile") from exc
+        if not rows:
+            raise HTTPException(status_code=403, detail="Staff profile is not registered in AccessibleCare")
+        return UUID(str(rows[0]["hospital_id"]))
+
+    def _verify_visit_hospital(self, accessibility_visit_id: UUID, hospital_id: UUID) -> None:
+        try:
+            visits = (
+                self.supabase.table("accessibility_visits")
+                .select("id, appointments!inner(hospital_id)")
+                .eq("id", str(accessibility_visit_id))
+                .eq("appointments.hospital_id", str(hospital_id))
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="Unable to verify accessibility visit") from exc
+        if not visits:
+            raise HTTPException(status_code=404, detail="Accessibility visit not found")
 
     def _load_group(self, group_id: UUID) -> InterpreterRequestGroupResult:
         try:
