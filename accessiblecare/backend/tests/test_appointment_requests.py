@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from app.core.auth import UserIdentity
 from app.schemas.appointment_requests import AppointmentRequestConfirm, AppointmentRequestCreate, AppointmentRequestReject
@@ -108,12 +109,14 @@ class AppointmentRequestTests(unittest.TestCase):
             ],
             "appointment_requests": [{
                 "id": str(REQUEST_ID), "patient_id": str(PATIENT_ID), "hospital_id": str(HOSPITAL_ID), "department_id": str(DEPARTMENT_ID),
+                "reason_for_visit": "Routine ENT consultation", "accessibility_note": "Please use visual alerts when calling me.",
                 "communication_preference": "ISL", "interpreter_required": True, "preferred_interpreter_mode": "EITHER",
                 "remote_accepted": True, "companion_present": False, "companion_assists_communication": False,
                 "status": "PENDING", "appointment_id": None, "reviewed_by": None, "reviewed_at": None,
                 "created_at": "2026-09-10T10:00:00+00:00", "updated_at": "2026-09-10T10:00:00+00:00",
             }, {
                 "id": str(OTHER_REQUEST_ID), "patient_id": str(PATIENT_ID), "hospital_id": str(OTHER_HOSPITAL_ID), "department_id": str(OTHER_DEPARTMENT_ID),
+                "reason_for_visit": "Cardiology consultation", "accessibility_note": None,
                 "communication_preference": "TEXT", "interpreter_required": False, "preferred_interpreter_mode": None,
                 "remote_accepted": False, "companion_present": False, "companion_assists_communication": False,
                 "status": "PENDING", "appointment_id": None, "reviewed_by": None, "reviewed_at": None,
@@ -136,8 +139,9 @@ class AppointmentRequestTests(unittest.TestCase):
         created = self.service.create(PATIENT, self._create_payload())
         self.assertEqual(created["status"], "PENDING")
         self.assertEqual(created["patient_id"], str(PATIENT_ID))
+        self.assertEqual(created["reason_for_visit"], "Routine ENT consultation")
+        self.assertEqual(created["department"], None)  # Fake Supabase has no nested relation expansion.
         self.assertEqual(self.db["appointment_requests"][-1]["hospital_id"], str(HOSPITAL_ID))
-        self.assertEqual(self.db["appointment_requests"][-1]["reason_for_visit"], "Routine ENT consultation")
         self.assertTrue(self.db["appointment_requests"][-1]["companion_assists_communication"])
 
     def test_patient_cannot_read_another_patient_request(self):
@@ -183,6 +187,16 @@ class AppointmentRequestTests(unittest.TestCase):
         with self.assertRaises(HTTPException) as ctx: self.service.confirm(STAFF, REQUEST_ID, payload)
         self.assertEqual(ctx.exception.status_code, 409)
         self.assertEqual(len(self.db["appointments"]), 0)
+
+    def test_request_schema_rejects_client_identity_fields(self):
+        with self.assertRaises(ValidationError):
+            AppointmentRequestCreate(
+                department_id=DEPARTMENT_ID,
+                reason_for_visit="General consultation",
+                communication_preference=CommunicationPreference.TEXT,
+                patient_id=PATIENT_ID,
+                hospital_id=HOSPITAL_ID,
+            )
 
     def test_request_schema_does_not_require_patient_selected_time(self):
         payload = AppointmentRequestCreate(
