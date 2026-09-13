@@ -64,10 +64,7 @@ class InterpreterRequestService:
         """Start interpreter coordination for a staff member's hospital-scoped visit."""
         hospital_id = self._staff_hospital_id(current_user)
         self._verify_visit_hospital(accessibility_visit_id, hospital_id)
-        return self.create_request_group(
-            accessibility_visit_id,
-            candidate_limit=candidate_limit,
-        )
+        return self.create_request_group(accessibility_visit_id, candidate_limit=candidate_limit)
 
     def create_request_group(
         self,
@@ -84,80 +81,28 @@ class InterpreterRequestService:
 
         selected = eligibility.candidates[:candidate_limit]
         requested_mode = eligibility.requested_mode or "EITHER"
-
-        # Prevent duplicate active request groups for the same visit. A later
-        # retry must not create another set of pending requests accidentally.
-        try:
-            existing = (
-                self.supabase.table("interpreter_request_groups")
-                .select("id, accessibility_visit_id, requested_mode, strategy, candidate_limit, status")
-                .eq("accessibility_visit_id", str(accessibility_visit_id))
-                .in_("status", ["PENDING", "ACTIVE"])
-                .limit(1)
-                .execute()
-                .data
-                or []
-            )
-        except Exception as exc:
-            raise HTTPException(status_code=503, detail="Unable to check interpreter request group") from exc
-
-        if existing:
-            return self._load_group(UUID(str(existing[0]["id"])))
+        candidates_payload = [{"interpreter_id": candidate.interpreter_id} for candidate in selected]
 
         try:
-            group_result = (
-                self.supabase.table("interpreter_request_groups")
-                .insert(
-                    {
-                        "accessibility_visit_id": str(accessibility_visit_id),
-                        "requested_mode": requested_mode,
-                        "strategy": PARALLEL_TOP_N,
-                        "candidate_limit": candidate_limit,
-                        "status": "PENDING",
-                    }
-                )
-                .execute()
-            )
+            rpc_result = self.supabase.rpc(
+                "create_interpreter_request_group",
+                {
+                    "p_accessibility_visit_id": str(accessibility_visit_id),
+                    "p_requested_mode": requested_mode,
+                    "p_candidate_limit": candidate_limit,
+                    "p_candidates": candidates_payload,
+                },
+            ).execute()
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Unable to create interpreter request group") from exc
 
-        if not group_result.data:
-            raise HTTPException(status_code=503, detail="Interpreter request group could not be created")
+        result = rpc_result.data
+        if isinstance(result, list):
+            result = result[0] if result else {}
+        if not isinstance(result, dict) or not result.get("request_group_id"):
+            raise HTTPException(status_code=503, detail="Interpreter request group returned an invalid result")
 
-        group_id = UUID(str(group_result.data[0]["id"]))
-        try:
-            request_result = (
-                self.supabase.table("interpreter_requests")
-                .insert(
-                    [
-                        {
-                            "request_group_id": str(group_id),
-                            "interpreter_id": candidate.interpreter_id,
-                            "response_status": "PENDING",
-                            "assignment_status": "UNASSIGNED",
-                        }
-                        for candidate in selected
-                    ]
-                )
-                .execute()
-            )
-        except Exception as exc:
-            # Best-effort cleanup keeps the group/request state consistent when
-            # the request rows cannot be created. No external side effects occur.
-            try:
-                self.supabase.table("interpreter_request_groups").delete().eq("id", str(group_id)).execute()
-            except Exception:
-                pass
-            raise HTTPException(status_code=503, detail="Unable to create interpreter requests") from exc
-
-        if not request_result.data:
-            try:
-                self.supabase.table("interpreter_request_groups").delete().eq("id", str(group_id)).execute()
-            except Exception:
-                pass
-            raise HTTPException(status_code=503, detail="Interpreter requests could not be created")
-
-        return self._load_group(group_id)
+        return self._load_group(UUID(str(result["request_group_id"])))
 
     def _staff_hospital_id(self, current_user: UserIdentity) -> UUID:
         if current_user.role != "STAFF":
