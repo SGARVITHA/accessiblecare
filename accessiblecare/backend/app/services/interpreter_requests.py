@@ -183,17 +183,31 @@ class InterpreterRequestService:
         try:
             visits = (
                 self.supabase.table("accessibility_visits")
-                .select("id, appointments!inner(hospital_id)")
+                .select("id, appointment_id")
                 .eq("id", str(accessibility_visit_id))
-                .eq("appointments.hospital_id", str(hospital_id))
                 .limit(1)
                 .execute()
                 .data
                 or []
             )
+            if not visits:
+                raise HTTPException(status_code=404, detail="Accessibility visit not found")
+
+            appointments = (
+                self.supabase.table("appointments")
+                .select("id, hospital_id")
+                .eq("id", str(visits[0]["appointment_id"]))
+                .eq("hospital_id", str(hospital_id))
+                .limit(1)
+                .execute()
+                .data
+                or []
+            )
+        except HTTPException:
+            raise
         except Exception as exc:
             raise HTTPException(status_code=503, detail="Unable to verify accessibility visit") from exc
-        if not visits:
+        if not appointments:
             raise HTTPException(status_code=404, detail="Accessibility visit not found")
 
     def _load_group(self, group_id: UUID) -> InterpreterRequestGroupResult:
